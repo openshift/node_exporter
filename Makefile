@@ -139,7 +139,7 @@ $(GOPATH)/bin/promtool promtool:
 	@GOOS= GOARCH= $(GO) get -u github.com/prometheus/prometheus/cmd/promtool
 
 $(GOPATH)/bin/promu promu:
-	@GOOS= GOARCH= $(GO) get -u github.com/prometheus/promu
+	@GOOS= GOARCH= $(GO) get github.com/prometheus/promu
 
 $(GOPATH)/bin/staticcheck:
 	@GOOS= GOARCH= $(GO) get -u honnef.co/go/tools/cmd/staticcheck

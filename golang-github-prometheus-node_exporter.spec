@@ -21,7 +21,6 @@ Summary:	Prometheus exporter for hardware and OS metrics exposed by *NIX kernels
 License:	ASL 2.0
 URL:		https://prometheus.io/
 Source0:	https://%{provider_prefix}/archive/%{commit}/%{repo}-%{shortcommit}.tar.gz
-Patch0:		0001-build-config-for-rpm.patch
 
 # promu build tool used for building prometheus
 %global promu_repo      promu
@@ -50,7 +49,6 @@ Provides:       prometheus-node_exporter = %{version}-%{release}
 %prep
 %setup -q -T -n %{promu_repo}-%{promu_commit} -b 1
 %setup -q -n %{repo}-%{commit}
-%patch0 -p1
 
 %build
 mkdir -p %{build_gopath}/src/%{provider}.%{provider_tld}/%{project}
