@@ -13,7 +13,13 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+pwd
 v=$(mktemp --suffix=.virt.working)
+ls -alZ "${v}"
+ls -alZ /tmp
+ls -alZ "$( pwd )"
+v=$(cd "${TMPDIR:-/tmp}" && mktemp --suffix=.virt.working)
+ls -alZ "${v}"
 chmod ug+r "${v}"
 
 if [ -x /usr/sbin/virt-what ]
