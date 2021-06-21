@@ -49,6 +49,19 @@ then
     echo "virt_platform{type=\"openstack\"} 1" >>"${v}"
   fi
 
+  if dmidecode -s system-manufacturer | grep "VMware, Inc."; then
+    count=$(( count + 1 ))
+    case $(dmidecode -t 0 | grep Address | awk '{ print $2 }') in
+    	"0xEA580" ) esxi_version="6.5" ;;
+        "0xEA520" ) esxi_version="6.7" ;;
+        "0xEA490" ) esxi_version="6.7U3" ;;
+        "0xEA480" ) esxi_version="7" ;;
+                * ) echo "unknown"
+    esac
+
+    echo "virt_platform{type=\"vmware\",esxi_version=\"${esxi_version}\"} 1" >>"${v}"
+  fi
+
   if [[ "${count}" -eq 0 ]]; then
     line="$( printf 'virt_platform{type="none",bios_vendor="%q",bios_version="%q",system_manufacturer="%q",system_product_name="%q",system_version="%q",baseboard_manufacturer="%q",baseboard_product_name="%q"} 1' \
       "$( dmidecode -s bios-vendor )" "$( dmidecode -s bios-version )" \
