@@ -22,13 +22,8 @@ import (
 	"os"
 	"regexp"
 
-<<<<<<< HEAD
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-=======
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
->>>>>>> v1.2.0
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/procfs/sysfs"
 	"gopkg.in/alecthomas/kingpin.v2"
