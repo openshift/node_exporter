@@ -27,6 +27,7 @@ type conn interface {
 	Send(m netlink.Message) (netlink.Message, error)
 	Receive() ([]netlink.Message, error)
 	Execute(m netlink.Message) ([]netlink.Message, error)
+	SetOption(option netlink.ConnOption, enable bool) error
 	SetReadDeadline(t time.Time) error
 }
 
@@ -62,10 +63,12 @@ func (c *Conn) Close() error {
 	return c.c.Close()
 }
 
+// SetOption enables or disables a netlink socket option for the Conn.
+func (c *Conn) SetOption(option netlink.ConnOption, enable bool) error {
+	return c.c.SetOption(option, enable)
+}
+
 // SetReadDeadline sets the read deadline associated with the connection.
-//
-// Deadline functionality is only supported on Go 1.12+. Calling this function
-// on older versions of Go will result in an error.
 func (c *Conn) SetReadDeadline(t time.Time) error {
 	return c.c.SetReadDeadline(t)
 }

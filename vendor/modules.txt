@@ -16,11 +16,11 @@ github.com/coreos/go-systemd/dbus
 # github.com/ema/qdisc v0.0.0-20200603082823-62d0308e3e00
 ## explicit
 github.com/ema/qdisc
-# github.com/go-kit/log v0.1.0
+# github.com/go-kit/log v0.2.0
 ## explicit
 github.com/go-kit/log
 github.com/go-kit/log/level
-# github.com/go-logfmt/logfmt v0.5.0
+# github.com/go-logfmt/logfmt v0.5.1
 github.com/go-logfmt/logfmt
 # github.com/godbus/dbus v0.0.0-20190402143921-271e53dc4968
 ## explicit
@@ -37,7 +37,10 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/hodgesds/perf-utils v0.2.5
+# github.com/hashicorp/go-envparse v0.0.0-20200406174449-d9cfd743a15e
+## explicit
+github.com/hashicorp/go-envparse
+# github.com/hodgesds/perf-utils v0.4.0
 ## explicit
 github.com/hodgesds/perf-utils
 # github.com/illumos/go-kstat v0.0.0-20210513183136-173c9b0a9973
@@ -47,11 +50,11 @@ github.com/illumos/go-kstat
 github.com/josharian/native
 # github.com/jpillora/backoff v1.0.0
 github.com/jpillora/backoff
-# github.com/jsimonetti/rtnetlink v0.0.0-20210713125558-2bfdf1dbdbd6
+# github.com/jsimonetti/rtnetlink v0.0.0-20211022192332-93da33804786
 ## explicit
 github.com/jsimonetti/rtnetlink
 github.com/jsimonetti/rtnetlink/internal/unix
-# github.com/lufia/iostat v1.1.0
+# github.com/lufia/iostat v1.2.0
 ## explicit
 github.com/lufia/iostat
 # github.com/mattn/go-xmlrpc v0.0.3
@@ -80,10 +83,12 @@ github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/collectors
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
+github.com/prometheus/client_golang/prometheus/testutil
+github.com/prometheus/client_golang/prometheus/testutil/promlint
 # github.com/prometheus/client_model v0.2.0
 ## explicit
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.29.0
+# github.com/prometheus/common v0.32.1
 ## explicit
 github.com/prometheus/common/config
 github.com/prometheus/common/expfmt
@@ -92,20 +97,21 @@ github.com/prometheus/common/model
 github.com/prometheus/common/promlog
 github.com/prometheus/common/promlog/flag
 github.com/prometheus/common/version
-# github.com/prometheus/exporter-toolkit v0.6.0
+# github.com/prometheus/exporter-toolkit v0.7.0
 ## explicit
 github.com/prometheus/exporter-toolkit/web
-# github.com/prometheus/procfs v0.7.2
+# github.com/prometheus/procfs v0.7.4-0.20211011103944-1a7a2bd3279f
 ## explicit
 github.com/prometheus/procfs
 github.com/prometheus/procfs/bcache
+github.com/prometheus/procfs/blockdevice
 github.com/prometheus/procfs/btrfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
 github.com/prometheus/procfs/nfs
 github.com/prometheus/procfs/sysfs
 github.com/prometheus/procfs/xfs
-# github.com/safchain/ethtool v0.0.0-20201023143004-874930cb3ce0
+# github.com/safchain/ethtool v0.1.0
 ## explicit
 github.com/safchain/ethtool
 # github.com/siebenmann/go-kstat v0.0.0-20210513183136-173c9b0a9973
@@ -139,7 +145,7 @@ golang.org/x/oauth2/clientcredentials
 golang.org/x/oauth2/internal
 # golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
+# golang.org/x/sys v0.0.0-20211117180635-dee7805ff2e1
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
