@@ -59,7 +59,8 @@ func (t *TLSStruct) SetDirectory(dir string) {
 }
 
 type HTTPStruct struct {
-	HTTP2 bool `yaml:"http2"`
+	HTTP2  bool              `yaml:"http2"`
+	Header map[string]string `yaml:"headers,omitempty"`
 }
 
 func getConfig(configPath string) (*Config, error) {
@@ -76,6 +77,9 @@ func getConfig(configPath string) (*Config, error) {
 		HTTPConfig: HTTPStruct{HTTP2: true},
 	}
 	err = yaml.UnmarshalStrict(content, c)
+	if err == nil {
+		err = validateHeaderConfig(c.HTTPConfig.Header)
+	}
 	c.TLSConfig.SetDirectory(filepath.Dir(configPath))
 	return c, err
 }
@@ -154,7 +158,7 @@ func ConfigToTLSConfig(c *TLSStruct) (*tls.Config, error) {
 	switch c.ClientAuth {
 	case "RequestClientCert":
 		cfg.ClientAuth = tls.RequestClientCert
-	case "RequireClientCert":
+	case "RequireAnyClientCert", "RequireClientCert": // Preserved for backwards compatibility.
 		cfg.ClientAuth = tls.RequireAnyClientCert
 	case "VerifyClientCertIfGiven":
 		cfg.ClientAuth = tls.VerifyClientCertIfGiven
@@ -207,7 +211,7 @@ func Serve(l net.Listener, server *http.Server, tlsConfigPath string, logger log
 		return err
 	}
 
-	server.Handler = &userAuthRoundtrip{
+	server.Handler = &webHandler{
 		tlsConfigPath: tlsConfigPath,
 		logger:        logger,
 		handler:       handler,
