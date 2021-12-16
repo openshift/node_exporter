@@ -247,7 +247,7 @@ node_cooling_device_cur_state{name="0",type="Processor"} 0
 # HELP node_cooling_device_max_state Maximum throttle state of the cooling device
 # TYPE node_cooling_device_max_state gauge
 node_cooling_device_max_state{name="0",type="Processor"} 3
-# HELP node_cpu_bug_info The `bugs` field of CPU information from /proc/cpuinfo.
+# HELP node_cpu_bug_info The `bugs` field of CPU information from /proc/cpuinfo taken from the first core.
 # TYPE node_cpu_bug_info gauge
 node_cpu_bug_info{bug="cpu_meltdown"} 1
 node_cpu_bug_info{bug="mds"} 1
@@ -259,7 +259,7 @@ node_cpu_core_throttles_total{core="0",package="0"} 5
 node_cpu_core_throttles_total{core="0",package="1"} 0
 node_cpu_core_throttles_total{core="1",package="0"} 0
 node_cpu_core_throttles_total{core="1",package="1"} 9
-# HELP node_cpu_flag_info The `flags` field of CPU information from /proc/cpuinfo.
+# HELP node_cpu_flag_info The `flags` field of CPU information from /proc/cpuinfo taken from the first core.
 # TYPE node_cpu_flag_info gauge
 node_cpu_flag_info{flag="aes"} 1
 node_cpu_flag_info{flag="avx"} 1
@@ -403,6 +403,23 @@ node_disk_flush_requests_time_seconds_total{device="sdc"} 1.944
 # HELP node_disk_flush_requests_total The total number of flush requests completed successfully
 # TYPE node_disk_flush_requests_total counter
 node_disk_flush_requests_total{device="sdc"} 1555
+# HELP node_disk_info Info of /sys/block/<block_device>.
+# TYPE node_disk_info gauge
+node_disk_info{device="dm-0",major="252",minor="0"} 1
+node_disk_info{device="dm-1",major="252",minor="1"} 1
+node_disk_info{device="dm-2",major="252",minor="2"} 1
+node_disk_info{device="dm-3",major="252",minor="3"} 1
+node_disk_info{device="dm-4",major="252",minor="4"} 1
+node_disk_info{device="dm-5",major="252",minor="5"} 1
+node_disk_info{device="mmcblk0",major="179",minor="0"} 1
+node_disk_info{device="mmcblk0p1",major="179",minor="1"} 1
+node_disk_info{device="mmcblk0p2",major="179",minor="2"} 1
+node_disk_info{device="nvme0n1",major="259",minor="0"} 1
+node_disk_info{device="sda",major="8",minor="0"} 1
+node_disk_info{device="sdb",major="8",minor="0"} 1
+node_disk_info{device="sdc",major="8",minor="0"} 1
+node_disk_info{device="sr0",major="11",minor="0"} 1
+node_disk_info{device="vda",major="254",minor="0"} 1
 # HELP node_disk_io_now The number of I/Os currently in progress.
 # TYPE node_disk_io_now gauge
 node_disk_io_now{device="dm-0"} 0
@@ -590,6 +607,9 @@ node_disk_written_bytes_total{device="sdb"} 1.01012736e+09
 node_disk_written_bytes_total{device="sdc"} 8.852736e+07
 node_disk_written_bytes_total{device="sr0"} 0
 node_disk_written_bytes_total{device="vda"} 1.0938236928e+11
+# HELP node_dmi_info A metric with a constant '1' value labeled by bios_date, bios_release, bios_vendor, bios_version, board_asset_tag, board_name, board_serial, board_vendor, board_version, chassis_asset_tag, chassis_serial, chassis_vendor, chassis_version, product_family, product_name, product_serial, product_sku, product_uuid, product_version, system_vendor if provided by DMI.
+# TYPE node_dmi_info gauge
+node_dmi_info{bios_date="04/12/2021",bios_release="2.2",bios_vendor="Dell Inc.",bios_version="2.2.4",board_name="07PXPY",board_serial=".7N62AI2.GRTCL6944100GP.",board_vendor="Dell Inc.",board_version="A01",chassis_asset_tag="",chassis_serial="7N62AI2",chassis_vendor="Dell Inc.",chassis_version="",product_family="PowerEdge",product_name="PowerEdge R6515",product_serial="7N62AI2",product_sku="SKU=NotProvided;ModelName=PowerEdge R6515",product_uuid="83340ca8-cb49-4474-8c29-d2088ca84dd9",product_version="�[�",system_vendor="Dell Inc."} 1
 # HELP node_drbd_activitylog_writes_total Number of updates of the activity log area of the meta data.
 # TYPE node_drbd_activitylog_writes_total counter
 node_drbd_activitylog_writes_total{device="drbd1"} 1100
@@ -1235,6 +1255,184 @@ node_ksmd_run 1
 # HELP node_ksmd_sleep_seconds ksmd 'sleep_millisecs' file.
 # TYPE node_ksmd_sleep_seconds gauge
 node_ksmd_sleep_seconds 0.02
+# HELP node_lnstat_allocs_total linux network cache stats
+# TYPE node_lnstat_allocs_total counter
+node_lnstat_allocs_total{cpu="0",subsystem="arp_cache"} 1
+node_lnstat_allocs_total{cpu="0",subsystem="ndisc_cache"} 240
+node_lnstat_allocs_total{cpu="1",subsystem="arp_cache"} 13
+node_lnstat_allocs_total{cpu="1",subsystem="ndisc_cache"} 252
+# HELP node_lnstat_delete_list_total linux network cache stats
+# TYPE node_lnstat_delete_list_total counter
+node_lnstat_delete_list_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_delete_list_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_delete_list_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_delete_list_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_delete_total linux network cache stats
+# TYPE node_lnstat_delete_total counter
+node_lnstat_delete_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_delete_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_delete_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_delete_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_destroys_total linux network cache stats
+# TYPE node_lnstat_destroys_total counter
+node_lnstat_destroys_total{cpu="0",subsystem="arp_cache"} 2
+node_lnstat_destroys_total{cpu="0",subsystem="ndisc_cache"} 241
+node_lnstat_destroys_total{cpu="1",subsystem="arp_cache"} 14
+node_lnstat_destroys_total{cpu="1",subsystem="ndisc_cache"} 253
+# HELP node_lnstat_drop_total linux network cache stats
+# TYPE node_lnstat_drop_total counter
+node_lnstat_drop_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_drop_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_drop_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_drop_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_early_drop_total linux network cache stats
+# TYPE node_lnstat_early_drop_total counter
+node_lnstat_early_drop_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_early_drop_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_early_drop_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_early_drop_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_entries_total linux network cache stats
+# TYPE node_lnstat_entries_total counter
+node_lnstat_entries_total{cpu="0",subsystem="arp_cache"} 20
+node_lnstat_entries_total{cpu="0",subsystem="ndisc_cache"} 36
+node_lnstat_entries_total{cpu="0",subsystem="nf_conntrack"} 33
+node_lnstat_entries_total{cpu="1",subsystem="arp_cache"} 20
+node_lnstat_entries_total{cpu="1",subsystem="ndisc_cache"} 36
+node_lnstat_entries_total{cpu="1",subsystem="nf_conntrack"} 33
+node_lnstat_entries_total{cpu="2",subsystem="nf_conntrack"} 33
+node_lnstat_entries_total{cpu="3",subsystem="nf_conntrack"} 33
+# HELP node_lnstat_expect_create_total linux network cache stats
+# TYPE node_lnstat_expect_create_total counter
+node_lnstat_expect_create_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_expect_create_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_expect_create_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_expect_create_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_expect_delete_total linux network cache stats
+# TYPE node_lnstat_expect_delete_total counter
+node_lnstat_expect_delete_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_expect_delete_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_expect_delete_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_expect_delete_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_expect_new_total linux network cache stats
+# TYPE node_lnstat_expect_new_total counter
+node_lnstat_expect_new_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_expect_new_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_expect_new_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_expect_new_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_forced_gc_runs_total linux network cache stats
+# TYPE node_lnstat_forced_gc_runs_total counter
+node_lnstat_forced_gc_runs_total{cpu="0",subsystem="arp_cache"} 10
+node_lnstat_forced_gc_runs_total{cpu="0",subsystem="ndisc_cache"} 249
+node_lnstat_forced_gc_runs_total{cpu="1",subsystem="arp_cache"} 22
+node_lnstat_forced_gc_runs_total{cpu="1",subsystem="ndisc_cache"} 261
+# HELP node_lnstat_found_total linux network cache stats
+# TYPE node_lnstat_found_total counter
+node_lnstat_found_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_found_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_found_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_found_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_hash_grows_total linux network cache stats
+# TYPE node_lnstat_hash_grows_total counter
+node_lnstat_hash_grows_total{cpu="0",subsystem="arp_cache"} 3
+node_lnstat_hash_grows_total{cpu="0",subsystem="ndisc_cache"} 242
+node_lnstat_hash_grows_total{cpu="1",subsystem="arp_cache"} 15
+node_lnstat_hash_grows_total{cpu="1",subsystem="ndisc_cache"} 254
+# HELP node_lnstat_hits_total linux network cache stats
+# TYPE node_lnstat_hits_total counter
+node_lnstat_hits_total{cpu="0",subsystem="arp_cache"} 5
+node_lnstat_hits_total{cpu="0",subsystem="ndisc_cache"} 244
+node_lnstat_hits_total{cpu="1",subsystem="arp_cache"} 17
+node_lnstat_hits_total{cpu="1",subsystem="ndisc_cache"} 256
+# HELP node_lnstat_icmp_error_total linux network cache stats
+# TYPE node_lnstat_icmp_error_total counter
+node_lnstat_icmp_error_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_icmp_error_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_icmp_error_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_icmp_error_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_ignore_total linux network cache stats
+# TYPE node_lnstat_ignore_total counter
+node_lnstat_ignore_total{cpu="0",subsystem="nf_conntrack"} 22666
+node_lnstat_ignore_total{cpu="1",subsystem="nf_conntrack"} 22180
+node_lnstat_ignore_total{cpu="2",subsystem="nf_conntrack"} 22740
+node_lnstat_ignore_total{cpu="3",subsystem="nf_conntrack"} 22152
+# HELP node_lnstat_insert_failed_total linux network cache stats
+# TYPE node_lnstat_insert_failed_total counter
+node_lnstat_insert_failed_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_insert_failed_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_insert_failed_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_insert_failed_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_insert_total linux network cache stats
+# TYPE node_lnstat_insert_total counter
+node_lnstat_insert_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_insert_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_insert_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_insert_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_invalid_total linux network cache stats
+# TYPE node_lnstat_invalid_total counter
+node_lnstat_invalid_total{cpu="0",subsystem="nf_conntrack"} 3
+node_lnstat_invalid_total{cpu="1",subsystem="nf_conntrack"} 2
+node_lnstat_invalid_total{cpu="2",subsystem="nf_conntrack"} 1
+node_lnstat_invalid_total{cpu="3",subsystem="nf_conntrack"} 47
+# HELP node_lnstat_lookups_total linux network cache stats
+# TYPE node_lnstat_lookups_total counter
+node_lnstat_lookups_total{cpu="0",subsystem="arp_cache"} 4
+node_lnstat_lookups_total{cpu="0",subsystem="ndisc_cache"} 243
+node_lnstat_lookups_total{cpu="1",subsystem="arp_cache"} 16
+node_lnstat_lookups_total{cpu="1",subsystem="ndisc_cache"} 255
+# HELP node_lnstat_new_total linux network cache stats
+# TYPE node_lnstat_new_total counter
+node_lnstat_new_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_new_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_new_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_new_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_periodic_gc_runs_total linux network cache stats
+# TYPE node_lnstat_periodic_gc_runs_total counter
+node_lnstat_periodic_gc_runs_total{cpu="0",subsystem="arp_cache"} 9
+node_lnstat_periodic_gc_runs_total{cpu="0",subsystem="ndisc_cache"} 248
+node_lnstat_periodic_gc_runs_total{cpu="1",subsystem="arp_cache"} 21
+node_lnstat_periodic_gc_runs_total{cpu="1",subsystem="ndisc_cache"} 260
+# HELP node_lnstat_rcv_probes_mcast_total linux network cache stats
+# TYPE node_lnstat_rcv_probes_mcast_total counter
+node_lnstat_rcv_probes_mcast_total{cpu="0",subsystem="arp_cache"} 7
+node_lnstat_rcv_probes_mcast_total{cpu="0",subsystem="ndisc_cache"} 246
+node_lnstat_rcv_probes_mcast_total{cpu="1",subsystem="arp_cache"} 19
+node_lnstat_rcv_probes_mcast_total{cpu="1",subsystem="ndisc_cache"} 258
+# HELP node_lnstat_rcv_probes_ucast_total linux network cache stats
+# TYPE node_lnstat_rcv_probes_ucast_total counter
+node_lnstat_rcv_probes_ucast_total{cpu="0",subsystem="arp_cache"} 8
+node_lnstat_rcv_probes_ucast_total{cpu="0",subsystem="ndisc_cache"} 247
+node_lnstat_rcv_probes_ucast_total{cpu="1",subsystem="arp_cache"} 20
+node_lnstat_rcv_probes_ucast_total{cpu="1",subsystem="ndisc_cache"} 259
+# HELP node_lnstat_res_failed_total linux network cache stats
+# TYPE node_lnstat_res_failed_total counter
+node_lnstat_res_failed_total{cpu="0",subsystem="arp_cache"} 6
+node_lnstat_res_failed_total{cpu="0",subsystem="ndisc_cache"} 245
+node_lnstat_res_failed_total{cpu="1",subsystem="arp_cache"} 18
+node_lnstat_res_failed_total{cpu="1",subsystem="ndisc_cache"} 257
+# HELP node_lnstat_search_restart_total linux network cache stats
+# TYPE node_lnstat_search_restart_total counter
+node_lnstat_search_restart_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_search_restart_total{cpu="1",subsystem="nf_conntrack"} 2
+node_lnstat_search_restart_total{cpu="2",subsystem="nf_conntrack"} 1
+node_lnstat_search_restart_total{cpu="3",subsystem="nf_conntrack"} 4
+# HELP node_lnstat_searched_total linux network cache stats
+# TYPE node_lnstat_searched_total counter
+node_lnstat_searched_total{cpu="0",subsystem="nf_conntrack"} 0
+node_lnstat_searched_total{cpu="1",subsystem="nf_conntrack"} 0
+node_lnstat_searched_total{cpu="2",subsystem="nf_conntrack"} 0
+node_lnstat_searched_total{cpu="3",subsystem="nf_conntrack"} 0
+# HELP node_lnstat_table_fulls_total linux network cache stats
+# TYPE node_lnstat_table_fulls_total counter
+node_lnstat_table_fulls_total{cpu="0",subsystem="arp_cache"} 12
+node_lnstat_table_fulls_total{cpu="0",subsystem="ndisc_cache"} 251
+node_lnstat_table_fulls_total{cpu="1",subsystem="arp_cache"} 24
+node_lnstat_table_fulls_total{cpu="1",subsystem="ndisc_cache"} 263
+# HELP node_lnstat_unresolved_discards_total linux network cache stats
+# TYPE node_lnstat_unresolved_discards_total counter
+node_lnstat_unresolved_discards_total{cpu="0",subsystem="arp_cache"} 11
+node_lnstat_unresolved_discards_total{cpu="0",subsystem="ndisc_cache"} 250
+node_lnstat_unresolved_discards_total{cpu="1",subsystem="arp_cache"} 23
+node_lnstat_unresolved_discards_total{cpu="1",subsystem="ndisc_cache"} 262
 # HELP node_load1 1m load average.
 # TYPE node_load1 gauge
 node_load1 0.21
@@ -2042,6 +2240,9 @@ node_netstat_TcpExt_SyncookiesRecv 0
 # HELP node_netstat_TcpExt_SyncookiesSent Statistic TcpExtSyncookiesSent.
 # TYPE node_netstat_TcpExt_SyncookiesSent untyped
 node_netstat_TcpExt_SyncookiesSent 0
+# HELP node_netstat_TcpExt_TCPTimeouts Statistic TcpExtTCPTimeouts.
+# TYPE node_netstat_TcpExt_TCPTimeouts untyped
+node_netstat_TcpExt_TCPTimeouts 115
 # HELP node_netstat_Tcp_ActiveOpens Statistic TcpActiveOpens.
 # TYPE node_netstat_Tcp_ActiveOpens untyped
 node_netstat_Tcp_ActiveOpens 3556
@@ -2640,6 +2841,12 @@ node_nfsd_server_threads 8
 # HELP node_nvme_info Non-numeric data from /sys/class/nvme/<device>, value is always 1.
 # TYPE node_nvme_info gauge
 node_nvme_info{device="nvme0",firmware_revision="1B2QEXP7",model="Samsung SSD 970 PRO 512GB",serial="S680HF8N190894I",state="live"} 1
+# HELP node_os_info A metric with a constant '1' value labeled by build_id, id, id_like, image_id, image_version, name, pretty_name, variant, variant_id, version, version_codename, version_id.
+# TYPE node_os_info gauge
+node_os_info{build_id="",id="ubuntu",id_like="debian",image_id="",image_version="",name="Ubuntu",pretty_name="Ubuntu 20.04.2 LTS",variant="",variant_id="",version="20.04.2 LTS (Focal Fossa)",version_codename="focal",version_id="20.04"} 1
+# HELP node_os_version Metric containing the major.minor part of the OS version.
+# TYPE node_os_version gauge
+node_os_version{id="ubuntu",id_like="debian",name="Ubuntu"} 20.04
 # HELP node_power_supply_capacity capacity value of /sys/class/power_supply/<power_supply>.
 # TYPE node_power_supply_capacity gauge
 node_power_supply_capacity{power_supply="BAT0"} 81
@@ -2741,10 +2948,10 @@ node_qdisc_requeues_total{device="eth0",kind="pfifo_fast"} 2
 node_qdisc_requeues_total{device="wlan0",kind="fq"} 1
 # HELP node_rapl_core_joules_total Current RAPL core value in joules
 # TYPE node_rapl_core_joules_total counter
-node_rapl_core_joules_total{index="0"} 118821.284256
+node_rapl_core_joules_total{index="0",path="collector/fixtures/sys/class/powercap/intel-rapl:0:0"} 118821.284256
 # HELP node_rapl_package_joules_total Current RAPL package value in joules
 # TYPE node_rapl_package_joules_total counter
-node_rapl_package_joules_total{index="0"} 240422.366267
+node_rapl_package_joules_total{index="0",path="collector/fixtures/sys/class/powercap/intel-rapl:0"} 240422.366267
 # HELP node_schedstat_running_seconds_total Number of seconds CPU spent running a process.
 # TYPE node_schedstat_running_seconds_total counter
 node_schedstat_running_seconds_total{cpu="0"} 2.045936778163039e+06
@@ -2770,6 +2977,7 @@ node_scrape_collector_success{collector="conntrack"} 1
 node_scrape_collector_success{collector="cpu"} 1
 node_scrape_collector_success{collector="cpufreq"} 1
 node_scrape_collector_success{collector="diskstats"} 1
+node_scrape_collector_success{collector="dmi"} 1
 node_scrape_collector_success{collector="drbd"} 1
 node_scrape_collector_success{collector="edac"} 1
 node_scrape_collector_success{collector="entropy"} 1
@@ -2780,6 +2988,7 @@ node_scrape_collector_success{collector="infiniband"} 1
 node_scrape_collector_success{collector="interrupts"} 1
 node_scrape_collector_success{collector="ipvs"} 1
 node_scrape_collector_success{collector="ksmd"} 1
+node_scrape_collector_success{collector="lnstat"} 1
 node_scrape_collector_success{collector="loadavg"} 1
 node_scrape_collector_success{collector="mdadm"} 1
 node_scrape_collector_success{collector="meminfo"} 1
@@ -2791,6 +3000,7 @@ node_scrape_collector_success{collector="netstat"} 1
 node_scrape_collector_success{collector="nfs"} 1
 node_scrape_collector_success{collector="nfsd"} 1
 node_scrape_collector_success{collector="nvme"} 1
+node_scrape_collector_success{collector="os"} 1
 node_scrape_collector_success{collector="powersupplyclass"} 1
 node_scrape_collector_success{collector="pressure"} 1
 node_scrape_collector_success{collector="processes"} 1
@@ -2803,6 +3013,7 @@ node_scrape_collector_success{collector="stat"} 1
 node_scrape_collector_success{collector="tapestats"} 1
 node_scrape_collector_success{collector="textfile"} 1
 node_scrape_collector_success{collector="thermal_zone"} 1
+node_scrape_collector_success{collector="time"} 1
 node_scrape_collector_success{collector="udp_queues"} 1
 node_scrape_collector_success{collector="vmstat"} 1
 node_scrape_collector_success{collector="wifi"} 1
@@ -2925,6 +3136,18 @@ node_textfile_scrape_error 0
 # HELP node_thermal_zone_temp Zone temperature in Celsius
 # TYPE node_thermal_zone_temp gauge
 node_thermal_zone_temp{type="cpu-thermal",zone="0"} 12.376
+# HELP node_time_clocksource_available_info Available clocksources read from '/sys/devices/system/clocksource'.
+# TYPE node_time_clocksource_available_info gauge
+node_time_clocksource_available_info{clocksource="acpi_pm",device="0"} 1
+node_time_clocksource_available_info{clocksource="hpet",device="0"} 1
+node_time_clocksource_available_info{clocksource="tsc",device="0"} 1
+# HELP node_time_clocksource_current_info Current clocksource read from '/sys/devices/system/clocksource'.
+# TYPE node_time_clocksource_current_info gauge
+node_time_clocksource_current_info{clocksource="tsc",device="0"} 1
+# HELP node_time_seconds System time in seconds since epoch (1970).
+# TYPE node_time_seconds gauge
+# HELP node_time_zone_offset_seconds System time zone offset in seconds.
+# TYPE node_time_zone_offset_seconds gauge
 # HELP node_udp_queues Number of allocated memory in the kernel for UDP datagrams in bytes.
 # TYPE node_udp_queues gauge
 node_udp_queues{ip="v4",queue="rx"} 0

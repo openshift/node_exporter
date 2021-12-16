@@ -23,9 +23,9 @@ local gauge = promgrafonnet.gauge;
         .addTarget(prometheus.target(
           |||
             (
-              (1 - rate(node_cpu_seconds_total{%(nodeExporterSelector)s, mode="idle", instance="$instance"}[$__rate_interval]))
+              (1 - sum without (mode) (rate(node_cpu_seconds_total{%(nodeExporterSelector)s, mode=~"idle|iowait|steal", instance="$instance"}[$__rate_interval])))
             / ignoring(cpu) group_left
-              count without (cpu)( node_cpu_seconds_total{%(nodeExporterSelector)s, mode="idle", instance="$instance"})
+              count without (cpu, mode) (node_cpu_seconds_total{%(nodeExporterSelector)s, mode="idle", instance="$instance"})
             )
           ||| % $._config,
           legendFormat='{{cpu}}',
@@ -200,7 +200,14 @@ local gauge = promgrafonnet.gauge;
           legendFormat='{{device}}',
         ));
 
-      dashboard.new('Nodes', time_from='now-1h')
+      dashboard.new(
+        '%sNodes' % $._config.dashboardNamePrefix,
+        time_from='now-1h',
+        tags=($._config.dashboardTags),
+        timezone='utc',
+        refresh='30s',
+        graphTooltip='shared_crosshair'
+      )
       .addTemplate(
         {
           current: {
@@ -208,7 +215,7 @@ local gauge = promgrafonnet.gauge;
             value: 'Prometheus',
           },
           hide: 0,
-          label: null,
+          label: 'Data Source',
           name: 'datasource',
           options: [],
           query: 'prometheus',
