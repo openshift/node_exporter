@@ -11,7 +11,7 @@ in Go with pluggable metric collectors.
 
 The [Windows exporter](https://github.com/prometheus-community/windows_exporter) is recommended for Windows users.
 To expose NVIDIA GPU metrics, [prometheus-dcgm
-](https://github.com/NVIDIA/gpu-monitoring-tools#dcgm-exporter)
+](https://github.com/NVIDIA/dcgm-exporter)
 can be used.
 
 ## Installation and Usage
@@ -96,6 +96,7 @@ conntrack | Shows conntrack statistics (does nothing if no `/proc/sys/net/netfil
 cpu | Exposes CPU statistics | Darwin, Dragonfly, FreeBSD, Linux, Solaris, OpenBSD
 cpufreq | Exposes CPU frequency statistics | Linux, Solaris
 diskstats | Exposes disk I/O statistics. | Darwin, Linux, OpenBSD
+dmi | Expose Desktop Management Interface (DMI) info from `/sys/class/dmi/id/` | Linux
 edac | Exposes error detection and correction statistics. | Linux
 entropy | Exposes available entropy. | Linux
 exec | Exposes execution statistics. | Dragonfly, FreeBSD
@@ -114,6 +115,7 @@ netstat | Exposes network statistics from `/proc/net/netstat`. This is the same 
 nfs | Exposes NFS client statistics from `/proc/net/rpc/nfs`. This is the same information as `nfsstat -c`. | Linux
 nfsd | Exposes NFS kernel server statistics from `/proc/net/rpc/nfsd`. This is the same information as `nfsstat -s`. | Linux
 nvme | Exposes NVMe info from `/sys/class/nvme/` | Linux
+os | Expose OS release info from `/etc/os-release` or `/usr/lib/os-release` | _any_
 powersupplyclass | Exposes Power Supply statistics from `/sys/class/power_supply` | Linux
 pressure | Exposes pressure stall statistics from `/proc/pressure/`. | Linux (kernel 4.20+ and/or [CONFIG\_PSI](https://www.kernel.org/doc/html/latest/accounting/psi.html))
 rapl | Exposes various statistics from `/sys/class/powercap`. | Linux
@@ -123,6 +125,7 @@ softnet | Exposes statistics from `/proc/net/softnet_stat`. | Linux
 stat | Exposes various statistics from `/proc/stat`. This includes boot time, forks and interrupts. | Linux
 tapestats | Exposes statistics from `/sys/class/scsi_tape`. | Linux
 textfile | Exposes statistics read from local disk. The `--collector.textfile.directory` flag must be set. | _any_
+thermal | Exposes thermal statistics like `pmset -g therm`. | Darwin
 thermal\_zone | Exposes thermal zone & cooling device statistics from `/sys/class/thermal`. | Linux
 time | Exposes the current system time. | _any_
 timex | Exposes selected adjtimex(2) system call stats. | Linux
@@ -192,9 +195,10 @@ Name     | Description | OS
 buddyinfo | Exposes statistics of memory fragments as reported by /proc/buddyinfo. | Linux
 devstat | Exposes device statistics | Dragonfly, FreeBSD
 drbd | Exposes Distributed Replicated Block Device statistics (to version 8.4) | Linux
-ethtool | Exposes network interface and network driver statistics equivalent to `ethtool -S`. | Linux
+ethtool | Exposes network interface information and network driver statistics equivalent to `ethtool`, `ethtool -S`, and `ethtool -i`. | Linux
 interrupts | Exposes detailed interrupts statistics. | Linux, OpenBSD
 ksmd | Exposes kernel and system statistics from `/sys/kernel/mm/ksm`. | Linux
+lnstat | Exposes stats from `/proc/net/stat/`. | Linux
 logind | Exposes session counts from [logind](http://www.freedesktop.org/wiki/Software/systemd/logind/). | Linux
 meminfo\_numa | Exposes memory statistics from `/proc/meminfo_numa`. | Linux
 mountstats | Exposes filesystem statistics from `/proc/self/mountstats`. Exposes detailed NFS client statistics. | Linux

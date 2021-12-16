@@ -8,19 +8,17 @@
             // This rule gives the number of CPUs per node.
             record: 'instance:node_num_cpu:sum',
             expr: |||
-              count without (cpu) (
-                count without (mode) (
-                  node_cpu_seconds_total{%(nodeExporterSelector)s}
-                )
+              count without (cpu, mode) (
+                node_cpu_seconds_total{%(nodeExporterSelector)s,mode="idle"}
               )
             ||| % $._config,
           },
           {
-            // CPU utilisation is % CPU is not idle.
+            // CPU utilisation is % CPU without {idle,iowait,steal}.
             record: 'instance:node_cpu_utilisation:rate%(rateInterval)s' % $._config,
             expr: |||
-              1 - avg without (cpu, mode) (
-                rate(node_cpu_seconds_total{%(nodeExporterSelector)s, mode="idle"}[%(rateInterval)s])
+              1 - avg without (cpu) (
+                sum without (mode) (rate(node_cpu_seconds_total{%(nodeExporterSelector)s, mode=~"idle|iowait|steal"}[%(rateInterval)s]))
               )
             ||| % $._config,
           },
@@ -43,7 +41,19 @@
             record: 'instance:node_memory_utilisation:ratio',
             expr: |||
               1 - (
-                node_memory_MemAvailable_bytes{%(nodeExporterSelector)s}
+                (
+                  node_memory_MemAvailable_bytes{%(nodeExporterSelector)s}
+                  or
+                  (
+                    node_memory_Buffers_bytes{%(nodeExporterSelector)s}
+                    +
+                    node_memory_Cached_bytes{%(nodeExporterSelector)s}
+                    +
+                    node_memory_MemFree_bytes{%(nodeExporterSelector)s}
+                    +
+                    node_memory_Slab_bytes{%(nodeExporterSelector)s}
+                  )
+                )
               /
                 node_memory_MemTotal_bytes{%(nodeExporterSelector)s}
               )

@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build !nocpu
 // +build !nocpu
 
 package collector
@@ -50,6 +51,7 @@ type cpuCollector struct {
 const jumpBackSeconds = 3.0
 
 var (
+	enableCPUGuest       = kingpin.Flag("collector.cpu.guest", "Enables metric node_cpu_guest_seconds_total").Default("true").Bool()
 	enableCPUInfo        = kingpin.Flag("collector.cpu.info", "Enables metric cpu_info").Bool()
 	flagsInclude         = kingpin.Flag("collector.cpu.info.flags-include", "Filter the `flags` field in cpuInfo with a value that must be a regular expression").String()
 	bugsInclude          = kingpin.Flag("collector.cpu.info.bugs-include", "Filter the `bugs` field in cpuInfo with a value that must be a regular expression").String()
@@ -76,12 +78,12 @@ func NewCPUCollector(logger log.Logger) (Collector, error) {
 		),
 		cpuFlagsInfo: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, cpuCollectorSubsystem, "flag_info"),
-			"The `flags` field of CPU information from /proc/cpuinfo.",
+			"The `flags` field of CPU information from /proc/cpuinfo taken from the first core.",
 			[]string{"flag"}, nil,
 		),
 		cpuBugsInfo: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, cpuCollectorSubsystem, "bug_info"),
-			"The `bugs` field of CPU information from /proc/cpuinfo.",
+			"The `bugs` field of CPU information from /proc/cpuinfo taken from the first core.",
 			[]string{"bug"}, nil,
 		),
 		cpuGuest: prometheus.NewDesc(
@@ -140,10 +142,7 @@ func (c *cpuCollector) Update(ch chan<- prometheus.Metric) error {
 	if err := c.updateStat(ch); err != nil {
 		return err
 	}
-	if err := c.updateThermalThrottle(ch); err != nil {
-		return err
-	}
-	return nil
+	return c.updateThermalThrottle(ch)
 }
 
 // updateInfo reads /proc/cpuinfo
@@ -166,7 +165,10 @@ func (c *cpuCollector) updateInfo(ch chan<- prometheus.Metric) error {
 			cpu.Microcode,
 			cpu.Stepping,
 			cpu.CacheSize)
+	}
 
+	if len(info) != 0 {
+		cpu := info[0]
 		if err := updateFieldInfo(cpu.Flags, c.cpuFlagsIncludeRegexp, c.cpuFlagsInfo, ch); err != nil {
 			return err
 		}
@@ -174,6 +176,7 @@ func (c *cpuCollector) updateInfo(ch chan<- prometheus.Metric) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -296,9 +299,11 @@ func (c *cpuCollector) updateStat(ch chan<- prometheus.Metric) error {
 		ch <- prometheus.MustNewConstMetric(c.cpu, prometheus.CounterValue, cpuStat.SoftIRQ, cpuNum, "softirq")
 		ch <- prometheus.MustNewConstMetric(c.cpu, prometheus.CounterValue, cpuStat.Steal, cpuNum, "steal")
 
-		// Guest CPU is also accounted for in cpuStat.User and cpuStat.Nice, expose these as separate metrics.
-		ch <- prometheus.MustNewConstMetric(c.cpuGuest, prometheus.CounterValue, cpuStat.Guest, cpuNum, "user")
-		ch <- prometheus.MustNewConstMetric(c.cpuGuest, prometheus.CounterValue, cpuStat.GuestNice, cpuNum, "nice")
+		if *enableCPUGuest {
+			// Guest CPU is also accounted for in cpuStat.User and cpuStat.Nice, expose these as separate metrics.
+			ch <- prometheus.MustNewConstMetric(c.cpuGuest, prometheus.CounterValue, cpuStat.Guest, cpuNum, "user")
+			ch <- prometheus.MustNewConstMetric(c.cpuGuest, prometheus.CounterValue, cpuStat.GuestNice, cpuNum, "nice")
+		}
 	}
 
 	return nil
