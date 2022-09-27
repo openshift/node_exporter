@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v1.6.2
+
+- [Bug Fix] [commit](https://github.com/mdlayher/netlink/commit/9f7f860d9865069cd1a6b4dee32a3095f0b841fc):
+  undo update to `golang.org/x/sys` which would force the minimum Go version of
+  this package to Go 1.17 due to use of `unsafe.Slice`. We encourage users to
+  use the latest stable version of Go where possible, but continue to maintain
+  some compatibility with older versions of Go as long as it is reasonable to do
+  so.
+
+## v1.6.1
+
+- [Deprecation] [commit](https://github.com/mdlayher/netlink/commit/d1b69ea8697d721415c259ef8513ab699c6d3e96): 
+  the `netlink.Socket` interface has been marked as deprecated. The abstraction
+  is awkward to use properly and disables much of the functionality of the Conn
+  type when the basic interface is implemented. Do not use.
+
 ## v1.6.0
 
 **This is the first release of package netlink that only supports Go 1.13+.
