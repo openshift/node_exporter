@@ -64,10 +64,7 @@ func NewNetClassCollector(logger log.Logger) (Collector, error) {
 }
 
 func (c *netClassCollector) Update(ch chan<- prometheus.Metric) error {
-	if *netclassNetlink {
-		return c.netClassRTNLUpdate(ch)
-	}
-	return c.netClassSysfsUpdate(ch)
+	return c.netClassRTNLUpdate(ch)
 }
 
 func (c *netClassCollector) netClassSysfsUpdate(ch chan<- prometheus.Metric) error {
