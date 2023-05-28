@@ -27,7 +27,7 @@ func MSRPaths() ([]string, error) {
 }
 
 // MSRs attemps to return all available MSRs.
-func MSRs(onErr func(error)) []*MSR {
+func MSRs(flag int, perm os.FileMode, onErr func(error)) []*MSR {
 	paths, err := MSRPaths()
 	if err != nil {
 		onErr(err)
@@ -35,7 +35,7 @@ func MSRs(onErr func(error)) []*MSR {
 	}
 	msrs := []*MSR{}
 	for _, path := range paths {
-		msr, err := NewMSR(path)
+		msr, err := NewMSR(path, flag, perm)
 		if err != nil {
 			onErr(err)
 			continue
@@ -51,8 +51,8 @@ type MSR struct {
 }
 
 // NewMSR returns a MSR.
-func NewMSR(path string) (*MSR, error) {
-	f, err := os.OpenFile(path, os.O_RDWR, 0660)
+func NewMSR(path string, flag int, perm os.FileMode) (*MSR, error) {
+	f, err := os.OpenFile(path, flag, perm)
 	if err != nil {
 		return nil, err
 	}
@@ -62,10 +62,9 @@ func NewMSR(path string) (*MSR, error) {
 }
 
 // Read is used to read a MSR value.
-func (m *MSR) Read(off int64) ([]byte, error) {
-	b := make([]byte, 8)
-	_, err := m.f.ReadAt(b, off)
-	return b, err
+func (m *MSR) Read(off int64, buf []byte) error {
+	_, err := m.f.ReadAt(buf, off)
+	return err
 }
 
 // Close is used to close the MSR.

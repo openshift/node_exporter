@@ -17,9 +17,11 @@
 package sysfs
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"github.com/prometheus/procfs/internal/util"
 )
@@ -116,6 +118,102 @@ func (fs FS) NetClass() (NetClass, error) {
 	return netClass, nil
 }
 
+// canIgnoreError returns true if the error is non-fatal and can be ignored.
+// Some kernels and some devices don't expose specific attributes or return
+// errors when reading those attributes; we can ignore these errors and the
+// attribute that caused them.
+func canIgnoreError(err error) bool {
+	var errno syscall.Errno
+
+	if os.IsNotExist(err) {
+		return true
+	} else if os.IsPermission(err) {
+		return true
+	} else if err.Error() == "operation not supported" {
+		return true
+	} else if errors.Is(err, os.ErrInvalid) {
+		return true
+	} else if errors.As(err, &errno) && (errno == syscall.EINVAL) {
+		return true
+	}
+	// all other errors are fatal
+	return false
+}
+
+// ParseNetClassAttribute parses a given file in /sys/class/net/<iface>
+// and sets the value in a given NetClassIface object if the value was readable.
+// It returns an error if the file cannot be read and the error is fatal.
+func ParseNetClassAttribute(devicePath, attrName string, interfaceClass *NetClassIface) error {
+	attrPath := filepath.Join(devicePath, attrName)
+	value, err := util.SysReadFile(attrPath)
+	if err != nil {
+		if canIgnoreError(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to read file %q: %w", attrPath, err)
+	}
+
+	vp := util.NewValueParser(value)
+	switch attrName {
+	case "addr_assign_type":
+		interfaceClass.AddrAssignType = vp.PInt64()
+	case "addr_len":
+		interfaceClass.AddrLen = vp.PInt64()
+	case "address":
+		interfaceClass.Address = value
+	case "broadcast":
+		interfaceClass.Broadcast = value
+	case "carrier":
+		interfaceClass.Carrier = vp.PInt64()
+	case "carrier_changes":
+		interfaceClass.CarrierChanges = vp.PInt64()
+	case "carrier_up_count":
+		interfaceClass.CarrierUpCount = vp.PInt64()
+	case "carrier_down_count":
+		interfaceClass.CarrierDownCount = vp.PInt64()
+	case "dev_id":
+		interfaceClass.DevID = vp.PInt64()
+	case "dormant":
+		interfaceClass.Dormant = vp.PInt64()
+	case "duplex":
+		interfaceClass.Duplex = value
+	case "flags":
+		interfaceClass.Flags = vp.PInt64()
+	case "ifalias":
+		interfaceClass.IfAlias = value
+	case "ifindex":
+		interfaceClass.IfIndex = vp.PInt64()
+	case "iflink":
+		interfaceClass.IfLink = vp.PInt64()
+	case "link_mode":
+		interfaceClass.LinkMode = vp.PInt64()
+	case "mtu":
+		interfaceClass.MTU = vp.PInt64()
+	case "name_assign_type":
+		interfaceClass.NameAssignType = vp.PInt64()
+	case "netdev_group":
+		interfaceClass.NetDevGroup = vp.PInt64()
+	case "operstate":
+		interfaceClass.OperState = value
+	case "phys_port_id":
+		interfaceClass.PhysPortID = value
+	case "phys_port_name":
+		interfaceClass.PhysPortName = value
+	case "phys_switch_id":
+		interfaceClass.PhysSwitchID = value
+	case "speed":
+		interfaceClass.Speed = vp.PInt64()
+	case "tx_queue_len":
+		interfaceClass.TxQueueLen = vp.PInt64()
+	case "type":
+		interfaceClass.Type = vp.PInt64()
+	default:
+		return nil
+	}
+
+	return nil
+}
+
 // parseNetClassIface scans predefined files in /sys/class/net/<iface>
 // directory and gets their contents.
 func parseNetClassIface(devicePath string) (*NetClassIface, error) {
@@ -130,68 +228,8 @@ func parseNetClassIface(devicePath string) (*NetClassIface, error) {
 		if !f.Type().IsRegular() {
 			continue
 		}
-		name := filepath.Join(devicePath, f.Name())
-		value, err := util.SysReadFile(name)
-		if err != nil {
-			if os.IsNotExist(err) || os.IsPermission(err) || err.Error() == "operation not supported" || err.Error() == "invalid argument" {
-				continue
-			}
-			return nil, fmt.Errorf("failed to read file %q: %w", name, err)
-		}
-		vp := util.NewValueParser(value)
-		switch f.Name() {
-		case "addr_assign_type":
-			interfaceClass.AddrAssignType = vp.PInt64()
-		case "addr_len":
-			interfaceClass.AddrLen = vp.PInt64()
-		case "address":
-			interfaceClass.Address = value
-		case "broadcast":
-			interfaceClass.Broadcast = value
-		case "carrier":
-			interfaceClass.Carrier = vp.PInt64()
-		case "carrier_changes":
-			interfaceClass.CarrierChanges = vp.PInt64()
-		case "carrier_up_count":
-			interfaceClass.CarrierUpCount = vp.PInt64()
-		case "carrier_down_count":
-			interfaceClass.CarrierDownCount = vp.PInt64()
-		case "dev_id":
-			interfaceClass.DevID = vp.PInt64()
-		case "dormant":
-			interfaceClass.Dormant = vp.PInt64()
-		case "duplex":
-			interfaceClass.Duplex = value
-		case "flags":
-			interfaceClass.Flags = vp.PInt64()
-		case "ifalias":
-			interfaceClass.IfAlias = value
-		case "ifindex":
-			interfaceClass.IfIndex = vp.PInt64()
-		case "iflink":
-			interfaceClass.IfLink = vp.PInt64()
-		case "link_mode":
-			interfaceClass.LinkMode = vp.PInt64()
-		case "mtu":
-			interfaceClass.MTU = vp.PInt64()
-		case "name_assign_type":
-			interfaceClass.NameAssignType = vp.PInt64()
-		case "netdev_group":
-			interfaceClass.NetDevGroup = vp.PInt64()
-		case "operstate":
-			interfaceClass.OperState = value
-		case "phys_port_id":
-			interfaceClass.PhysPortID = value
-		case "phys_port_name":
-			interfaceClass.PhysPortName = value
-		case "phys_switch_id":
-			interfaceClass.PhysSwitchID = value
-		case "speed":
-			interfaceClass.Speed = vp.PInt64()
-		case "tx_queue_len":
-			interfaceClass.TxQueueLen = vp.PInt64()
-		case "type":
-			interfaceClass.Type = vp.PInt64()
+		if err := ParseNetClassAttribute(devicePath, f.Name(), &interfaceClass); err != nil {
+			return nil, err
 		}
 	}
 
