@@ -5,12 +5,45 @@
 * [ENHANCEMENT]
 * [BUGFIX]
 
+## 1.6.0 / 2023-05-27
+
+* [CHANGE] Fix cpustat when some cpus are offline #2318
+* [CHANGE] Remove metrics of offline CPUs in CPU collector #2605
+* [CHANGE] Deprecate ntp collector #2603
+* [CHANGE] Remove bcache `cache_readaheads_totals` metrics #2583
+* [CHANGE] Deprecate supervisord collector #2685
+* [FEATURE] Enable uname collector on NetBSD #2559
+* [FEATURE] NetBSD support for the meminfo collector #2570
+* [FEATURE] NetBSD support for CPU collector #2626
+* [FEATURE] Add FreeBSD collector for netisr subsystem #2668
+* [FEATURE] Add softirqs collector #2669
+* [ENHANCEMENT] Add suspended as a `node_zfs_zpool_state` #2449
+* [ENHANCEMENT] Add administrative state of Linux network interfaces #2515
+* [ENHANCEMENT] Log current value of GOMAXPROCS #2537
+* [ENHANCEMENT] Add profiler options for perf collector #2542
+* [ENHANCEMENT] Allow root path as metrics path #2590
+* [ENHANCEMENT] Add cpu frequency governor metrics #2569
+* [ENHANCEMENT] Add new landing page #2622
+* [ENHANCEMENT] Reduce privileges needed for btrfs device stats #2634
+* [ENHANCEMENT] Add ZFS `memory_available_bytes` #2687
+* [ENHANCEMENT] Use `SCSI_IDENT_SERIAL` as serial in diskstats #2612
+* [ENHANCEMENT] Read missing from netlink netclass attributes from sysfs #2669
+* [BUGFIX] perf: fixes for automatically detecting the correct tracefs mountpoints #2553
+* [BUGFIX] Fix `thermal_zone` collector noise @2554
+* [BUGFIX] Fix a problem fetching the user wire count on FreeBSD 2584
+* [BUGFIX] interrupts: Fix fields on linux aarch64 #2631
+* [BUGFIX] Remove metrics of offline CPUs in CPU collector #2605
+* [BUGFIX] Fix OpenBSD filesystem collector string parsing #2637
+* [BUGFIX] Fix bad reporting of `node_cpu_seconds_total` in OpenBSD #2663
+
 ## 1.5.0 / 2022-11-29
 
 NOTE: This changes the Go runtime "GOMAXPROCS" to 1. This is done to limit the
   concurrency of the exporter to 1 CPU thread at a time in order to avoid a
   race condition problem in the Linux kernel (#2500) and parallel IO issues
   on nodes with high numbers of CPUs/CPU threads (#1880).
+
+NOTE: A command line arg has been changed from `--web.config` to `--web.config.file`.
 
 * [CHANGE] Default GOMAXPROCS to 1 #2530
 * [FEATURE] Add multiple listeners and systemd socket listener activation #2393
@@ -137,7 +170,7 @@ NOTE: Filesystem collector flags have been renamed. `--collector.filesystem.igno
 * [BUGFIX] Fix wrong value for OpenBSD memory buffer cache #2015
 * [BUGFIX] Only initiate collectors once #2048
 * [BUGFIX] Handle small backwards jumps in CPU idle #2067
-  
+
 ## 1.1.2 / 2021-03-05
 
 * [BUGFIX] Handle errors from disabled PSI subsystem #1983
@@ -445,7 +478,7 @@ Windows support is now removed, the [wmi_exporter](https://github.com/martinlind
 * [CHANGE] Switch to kingpin flags #639
 * [CHANGE] Replace --collectors.enabled with per-collector flags #640
 * [FEATURE] Add ARP collector for Linux #540
-* [FEATURE] Add XFS colector for Linux #568, #575
+* [FEATURE] Add XFS collector for Linux #568, #575
 * [FEATURE] Add qdisc collector for Linux #580
 * [FEATURE] Add cpufreq stats for Linux #548
 * [FEATURE] Add diskstats for Darwin #593
