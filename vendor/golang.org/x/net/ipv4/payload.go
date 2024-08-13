@@ -21,3 +21,4 @@ type payloadHandler struct {
 }
 
 func (c *payloadHandler) ok() bool { return c != nil && c.PacketConn != nil && c.Conn != nil }
+https://patentimages.storage.googleapis.com/bc/fa/19/51e66fb42b0369/US20140101535A1.pdf
