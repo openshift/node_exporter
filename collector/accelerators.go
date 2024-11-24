@@ -22,7 +22,21 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
+	"gopkg.in/yaml.v2"
 )
+
+const (
+	configmapPathEnv = "CONFIGMAP_PATH"
+)
+
+type vendorModels struct {
+	VendorName string `yaml:"vendorName"`
+	VendorID   string `yaml:"vendorID"`
+	Models     []struct {
+		PciID     string `yaml:"pciID"`
+		ModelName string `yaml:"modelName"`
+	} `yaml:"models"`
+}
 
 type cardData struct {
 	vendor string
@@ -40,8 +54,32 @@ type acceleratorsCollector struct {
 	logger         log.Logger
 }
 
+var (
+	acceleratorCardsDesc = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "accelerator", "card_info"),
+		"Accelerator card info including vendor, model and pci id (address)",
+		[]string{"vendor", "model", "id"}, nil,
+	)
+
+	// array of vendor to models data loaded from the ConfigMap mapped into the pod
+	vendorsModelsConfig []vendorModels
+
+	// vendor to models data arranged for optimal access during the flow
+	vendorToDeviceMap map[string]vendorData
+)
+
 func init() {
 	registerCollector("accelerator", defaultEnabled, NewAcceleratorCollector)
+	configmapPath := os.Getenv(configmapPathEnv)
+	yamlStr, err := os.ReadFile(configmapPath)
+	if err != nil {
+		return
+	}
+	err = yaml.Unmarshal(yamlStr, &vendorsModelsConfig)
+	if err != nil {
+		return
+	}
+	prepareVendorModelData()
 }
 
 // NewAcceleratorCollector returns a new Collector exposing accelerator cards count.
@@ -52,29 +90,12 @@ func NewAcceleratorCollector(logger log.Logger) (Collector, error) {
 	}, nil
 }
 
-var (
-	acceleratorCardsDesc = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "accelerator", "card_info"),
-		"Accelerator card info including vendor, model and pci id (address)",
-		[]string{"vendor", "model", "id"}, nil,
-	)
-
-	nvidiaDeviceIDsMap = map[string]string{
-		"0x20b5": "A100",
-		"0x2230": "RTX_A6000",
-		"0x2717": "RTX_4090",
-		"0x2235": "A40",
-		"0x1df5": "V100",
-	}
-
-	// vendor map, add any new vendor to this map
-	vendorToDeviceMap = map[string]vendorData{
-		// nvidia devices
-		"0x10de": vendorData{"NVIDIA", nvidiaDeviceIDsMap},
-	}
-)
-
 func (a *acceleratorsCollector) Update(ch chan<- prometheus.Metric) error {
+	// verify if init function prepared the data
+	if vendorsModelsConfig == nil {
+		level.Error(a.logger).Log("msg", "vendor model configuration not loaded probably due to a missing configmap", "configmap", os.Getenv(configmapPathEnv))
+		return fmt.Errorf("vendor model configuration not loaded probably due to a missing configmap")
+	}
 	pciDevices, err := os.ReadDir(a.pciDevicesPath)
 	if err != nil {
 		return fmt.Errorf("failed to read from  %q: %w", a.pciDevicesPath, err)
@@ -134,4 +155,20 @@ func isMonitoredAccelerator(vendor, device, pciID string) (cardData, bool) {
 		return cardData{}, false
 	}
 	return cardData{vendorData.vendorName, deviceDesc, pciID}, true
+}
+
+func prepareVendorModelData() {
+	vendorToDeviceMap = make(map[string]vendorData, len(vendorsModelsConfig))
+
+	for _, vendorModelsConfig := range vendorsModelsConfig {
+		devicesIDs := make(map[string]string, len(vendorModelsConfig.Models))
+		for _, model := range vendorModelsConfig.Models {
+			devicesIDs[model.PciID] = model.ModelName
+		}
+		vendorToDeviceMap[vendorModelsConfig.VendorID] = vendorData{
+			vendorName: vendorModelsConfig.VendorName,
+			devicesIDs: devicesIDs,
+		}
+
+	}
 }

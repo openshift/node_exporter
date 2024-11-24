@@ -94,7 +94,7 @@ all:: vet checkmetrics checkrules common-all $(cross-test) $(test-e2e)
 .PHONY: test
 test: collector/fixtures/sys/.unpacked collector/fixtures/udev/.unpacked
 	@echo ">> running tests"
-	$(GO) test -short $(test-flags) $(pkgs)
+	CONFIGMAP_PATH=testdata/accelerators_test_data.yaml $(GO) test -short $(test-flags) $(pkgs)
 
 .PHONY: test-32bit
 test-32bit: collector/fixtures/sys/.unpacked collector/fixtures/udev/.unpacked
