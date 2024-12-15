@@ -1,0 +1,23 @@
+- vendorName: NVIDIA
+  vendorID: 0x10de
+  models:
+  - pciID: 0x20b5
+    modelName: A100
+  - pciID: 0x2230
+    modelName: RTX_A6000
+  - pciID: 0x2717
+    modelName: RTX_4090
+  - pciID: 0x2235
+    modelName: A40
+  - pciID: 0x2235
+    modelName: V100
+  - pciID: 0x20f1
+    modelName: A100 40G
+- vendorName: AMD
+  vendorID: 0x1002
+  models:
+  - pciID: 0x740f
+    modelName: MI210
+  - pciID: 0x740c
+    modelName: MI250
+
