@@ -16,6 +16,7 @@ package collector
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -39,17 +40,23 @@ func (c testAcceleratorCollector) Describe(ch chan<- *prometheus.Desc) {
 func TestAccelerator(t *testing.T) {
 	testcase := `# HELP node_accelerator_card_info Accelerator card info including vendor, model and pci id (address)
 	# TYPE node_accelerator_card_info counter
-	node_accelerator_card_info{id="0000:00:02.0",model="NVIDIA A100 PCIe 80GB",vendor="NVIDIA"} 1
-	node_accelerator_card_info{id="0000:00:09.0",model="NVIDIA A100 PCIe 80GB",vendor="NVIDIA"} 1
+	node_accelerator_card_info{id="0000:00:02.0",model="A100",vendor="NVIDIA"} 1
+	node_accelerator_card_info{id="0000:00:09.0",model="A100",vendor="NVIDIA"} 1
+	node_accelerator_card_info{id="0000:00:1f.5",model="RTX_4090",vendor="NVIDIA"} 1
 	`
-
-	*sysPath = "fixtures/sys"
-
-	logger := log.NewLogfmtLogger(os.Stderr)
-	c, err := NewAcceleratorCollector(logger)
+	vendorToDeviceMap, err := prepareVendorModelData("testdata/accelerators_test_data.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	*sysPath = "fixtures/sys"
+	logger := log.NewLogfmtLogger(os.Stderr)
+	c := &acceleratorsCollector{
+		pciDevicesPath:    filepath.Join(*sysPath, "bus/pci/devices"),
+		logger:            logger,
+		vendorToDeviceMap: vendorToDeviceMap,
+	}
+
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(&testAcceleratorCollector{xc: c})
 
@@ -64,6 +71,18 @@ func TestAccelerator(t *testing.T) {
 
 	err = testutil.GatherAndCompare(reg, strings.NewReader(testcase))
 	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_prepareVendorModelData_badMapping(t *testing.T) {
+	_, err := prepareVendorModelData("testdata/accelerators_test_data_duplicated_vendors.bad.yaml")
+	if err == nil {
+		t.Fatal(err)
+	}
+
+	_, err = prepareVendorModelData("testdata/accelerators_test_data_duplicated_device_ids.bad.yaml")
+	if err == nil {
 		t.Fatal(err)
 	}
 }
