@@ -84,6 +84,14 @@ var (
 		"0x2233": "NVIDIA RTX A5500",
 		"0x1e30": "NVIDIA RTX 8000 passive",
 		"0x2531": "NVIDIA RTX A2000",
+		"0x20b0": "NVIDIA A100 SXM4 40G",
+		"0x233a": "NVIDIA H800 NVL",
+		"0x233b": "NVIDIA H200 NVL",
+		"0x20b2": "NVIDIA A100SXM4 80GB",
+		"0x20b3": "NVIDIA A100 SXM 64GB",
+		"0x20bd": "NVIDIA A800 SXM4 40GB",
+		"0x20f3": "NVIDIA A800 SXM4 80GB",
+		"0x25b0": "NVIDIA RTX A1000",
 	}
 
 	amdDeviceIDsMap = map[string]string{
