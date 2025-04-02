@@ -169,6 +169,11 @@ func (h *header) setLeap(li LeapIndicator) {
 	h.LiVnMode = (h.LiVnMode & 0x3f) | uint8(li)<<6
 }
 
+// getVersion returns the version value in the header.
+func (h *header) getVersion() int {
+	return int((h.LiVnMode >> 3) & 0x7)
+}
+
 // getMode returns the mode value in the header.
 func (h *header) getMode() mode {
 	return mode(h.LiVnMode & 0x07)
@@ -260,6 +265,9 @@ type Response struct {
 
 	// Precision is the reported precision of the server's clock.
 	Precision time.Duration
+
+	// Version is the NTP protocol version number reported by the server.
+	Version int
 
 	// Stratum is the "stratum level" of the server. The smaller the number,
 	// the closer the server is to the reference clock. Stratum 1 servers are
@@ -693,6 +701,7 @@ func generateResponse(h *header, recvTime ntpTime, authErr error) *Response {
 		ClockOffset:    offset(h.OriginTime, h.ReceiveTime, h.TransmitTime, recvTime),
 		RTT:            rtt(h.OriginTime, h.ReceiveTime, h.TransmitTime, recvTime),
 		Precision:      toInterval(h.Precision),
+		Version:        h.getVersion(),
 		Stratum:        h.Stratum,
 		ReferenceID:    h.ReferenceID,
 		ReferenceTime:  h.ReferenceTime.Time(),
@@ -726,23 +735,32 @@ func generateResponse(h *header, recvTime ntpTime, authErr error) *Response {
 //   dst = Destination Timestamp (client receive time)
 
 func rtt(org, rec, xmt, dst ntpTime) time.Duration {
-	// round trip delay time
-	//   rtt = (dst-org) - (xmt-rec)
-	a := dst.Time().Sub(org.Time())
-	b := xmt.Time().Sub(rec.Time())
+	a := int64(dst - org)
+	b := int64(xmt - rec)
 	rtt := a - b
 	if rtt < 0 {
 		rtt = 0
 	}
-	return rtt
+	return ntpTime(rtt).Duration()
 }
 
 func offset(org, rec, xmt, dst ntpTime) time.Duration {
-	// local clock offset
-	//   offset = ((rec-org) + (xmt-dst)) / 2
-	a := rec.Time().Sub(org.Time())
-	b := xmt.Time().Sub(dst.Time())
-	return (a + b) / time.Duration(2)
+	// The inputs are 64-bit unsigned integer timestamps. These timestamps can
+	// "roll over" at the end of an NTP era, which occurs approximately every
+	// 136 years starting from the year 1900. To ensure an accurate offset
+	// calculation when an era boundary is crossed, we need to take care that
+	// the difference between two 64-bit timestamp values is accurately
+	// calculated even when they are in neighboring eras.
+	//
+	// See: https://www.eecis.udel.edu/~mills/y2k.html
+
+	a := int64(rec - org)
+	b := int64(xmt - dst)
+	offset := a + (b-a)/2
+	if offset < 0 {
+		return -ntpTime(-offset).Duration()
+	}
+	return ntpTime(offset).Duration()
 }
 
 func minError(org, rec, xmt, dst ntpTime) time.Duration {

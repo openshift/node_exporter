@@ -6,6 +6,7 @@ package wifi
 import (
 	"bytes"
 	"crypto/sha1"
+	"encoding/binary"
 	"net"
 	"os"
 	"time"
@@ -184,10 +185,6 @@ func (c *client) StationInfo(ifi *Interface) ([]*StationInfo, error) {
 		return nil, err
 	}
 
-	if len(msgs) == 0 {
-		return nil, os.ErrNotExist
-	}
-
 	stations := make([]*StationInfo, len(msgs))
 	for i := range msgs {
 		if stations[i], err = parseStationInfo(msgs[i].Data); err != nil {
@@ -196,6 +193,21 @@ func (c *client) StationInfo(ifi *Interface) ([]*StationInfo, error) {
 	}
 
 	return stations, nil
+}
+
+// SetDeadline sets the read and write deadlines associated with the connection.
+func (c *client) SetDeadline(t time.Time) error {
+	return c.c.SetDeadline(t)
+}
+
+// SetReadDeadline sets the read deadline associated with the connection.
+func (c *client) SetReadDeadline(t time.Time) error {
+	return c.c.SetReadDeadline(t)
+}
+
+// SetWriteDeadline sets the write deadline associated with the connection.
+func (c *client) SetWriteDeadline(t time.Time) error {
+	return c.c.SetWriteDeadline(t)
 }
 
 // get performs a request/response interaction with nl80211.
@@ -384,6 +396,12 @@ func (b *BSS) parseAttributes(attrs []netlink.Attribute) error {
 				switch ie.ID {
 				case ieSSID:
 					b.SSID = decodeSSID(ie.Data)
+				case ieBSSLoad:
+					Bssload, err := decodeBSSLoad(ie.Data)
+					if err != nil {
+						continue // This IE is malformed
+					}
+					b.Load = *Bssload
 				}
 			}
 		}
@@ -443,6 +461,8 @@ func (info *StationInfo) parseAttributes(attrs []netlink.Attribute) error {
 			//  * @NL80211_STA_INFO_SIGNAL: signal strength of last received PPDU (u8, dBm)
 			// Should just be cast to int8, see code here: https://git.kernel.org/pub/scm/linux/kernel/git/jberg/iw.git/tree/station.c#n378
 			info.Signal = int(int8(a.Data[0]))
+		case unix.NL80211_STA_INFO_SIGNAL_AVG:
+			info.SignalAverage = int(int8(a.Data[0]))
 		case unix.NL80211_STA_INFO_RX_PACKETS:
 			info.ReceivedPackets = int(nlenc.Uint32(a.Data))
 		case unix.NL80211_STA_INFO_TX_PACKETS:
@@ -543,4 +563,29 @@ func decodeSSID(b []byte) string {
 	}
 
 	return buf.String()
+}
+
+// decodeBSSLoad Decodes the BSSLoad IE. Supports Version 1 and Version 2
+// values according to https://raw.githubusercontent.com/wireshark/wireshark/master/epan/dissectors/packet-ieee80211.c
+// See also source code of iw (v5.19) scan.c Line 1634ff
+// BSS Load ELement (with length 5) is defined by chapter 9.4.2.27 (page 1066) of the current IEEE 802.11-2020
+func decodeBSSLoad(b []byte) (*BSSLoad, error) {
+	var load BSSLoad
+	if len(b) == 5 {
+		// Wireshark calls this "802.11e CCA Version"
+		// This is the version defined in IEEE 802.11 (Versions 2007, 2012, 2016 and 2020)
+		load.Version = 2
+		load.StationCount = binary.LittleEndian.Uint16(b[0:2])               // first 2 bytes
+		load.ChannelUtilization = b[2]                                       // next 1 byte
+		load.AvailableAdmissionCapacity = binary.LittleEndian.Uint16(b[3:5]) // last 2 bytes
+	} else if len(b) == 4 {
+		// Wireshark calls this "Cisco QBSS Version 1 - non CCA"
+		load.Version = 1
+		load.StationCount = binary.LittleEndian.Uint16(b[0:2]) // first 2 bytes
+		load.ChannelUtilization = b[2]                         // next 1 byte
+		load.AvailableAdmissionCapacity = uint16(b[3])         // next 1 byte
+	} else {
+		return nil, errInvalidBSSLoad
+	}
+	return &load, nil
 }
