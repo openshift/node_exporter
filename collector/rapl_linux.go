@@ -19,11 +19,12 @@ package collector
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"strconv"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/procfs/sysfs"
 )
@@ -32,7 +33,7 @@ const raplCollectorSubsystem = "rapl"
 
 type raplCollector struct {
 	fs     sysfs.FS
-	logger *slog.Logger
+	logger log.Logger
 
 	joulesMetricDesc *prometheus.Desc
 }
@@ -46,7 +47,7 @@ var (
 )
 
 // NewRaplCollector returns a new Collector exposing RAPL metrics.
-func NewRaplCollector(logger *slog.Logger) (Collector, error) {
+func NewRaplCollector(logger log.Logger) (Collector, error) {
 	fs, err := sysfs.NewFS(*sysPath)
 
 	if err != nil {
@@ -73,11 +74,11 @@ func (c *raplCollector) Update(ch chan<- prometheus.Metric) error {
 	zones, err := sysfs.GetRaplZones(c.fs)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			c.logger.Debug("Platform doesn't have powercap files present", "err", err)
+			level.Debug(c.logger).Log("msg", "Platform doesn't have powercap files present", "err", err)
 			return ErrNoData
 		}
 		if errors.Is(err, os.ErrPermission) {
-			c.logger.Debug("Can't access powercap files", "err", err)
+			level.Debug(c.logger).Log("msg", "Can't access powercap files", "err", err)
 			return ErrNoData
 		}
 		return fmt.Errorf("failed to retrieve rapl stats: %w", err)
@@ -87,7 +88,7 @@ func (c *raplCollector) Update(ch chan<- prometheus.Metric) error {
 		microJoules, err := rz.GetEnergyMicrojoules()
 		if err != nil {
 			if errors.Is(err, os.ErrPermission) {
-				c.logger.Debug("Can't access energy_uj file", "zone", rz, "err", err)
+				level.Debug(c.logger).Log("msg", "Can't access energy_uj file", "zone", rz, "err", err)
 				return ErrNoData
 			}
 			return err

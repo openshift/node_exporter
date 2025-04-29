@@ -15,12 +15,12 @@ package collector
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
@@ -50,7 +50,7 @@ func TestAccelerator(t *testing.T) {
 	}
 
 	*sysPath = "fixtures/sys"
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger := log.NewLogfmtLogger(os.Stderr)
 	c := &acceleratorsCollector{
 		pciDevicesPath:    filepath.Join(*sysPath, "bus/pci/devices"),
 		logger:            logger,

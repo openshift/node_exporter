@@ -18,10 +18,10 @@ package collector
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"strconv"
 
+	"github.com/go-kit/log"
 	"github.com/godbus/dbus/v5"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -46,7 +46,7 @@ var (
 )
 
 type logindCollector struct {
-	logger *slog.Logger
+	logger log.Logger
 }
 
 type logindDbus struct {
@@ -86,7 +86,7 @@ func init() {
 }
 
 // NewLogindCollector returns a new Collector exposing logind statistics.
-func NewLogindCollector(logger *slog.Logger) (Collector, error) {
+func NewLogindCollector(logger log.Logger) (Collector, error) {
 	return &logindCollector{logger}, nil
 }
 

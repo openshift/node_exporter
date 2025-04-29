@@ -18,11 +18,11 @@ package collector
 
 import (
 	"fmt"
-	"io"
-	"log/slog"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
@@ -68,7 +68,7 @@ func TestWatchdogStats(t *testing.T) {
 	`
 	*sysPath = "fixtures/sys"
 
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	logger := log.NewLogfmtLogger(os.Stderr)
 	c, err := NewWatchdogCollector(logger)
 	if err != nil {
 		t.Fatal(err)

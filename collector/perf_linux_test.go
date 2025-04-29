@@ -17,14 +17,13 @@
 package collector
 
 import (
-	"io"
-	"log/slog"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -45,7 +44,7 @@ func canTestPerf(t *testing.T) {
 
 func TestPerfCollector(t *testing.T) {
 	canTestPerf(t)
-	collector, err := NewPerfCollector(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	collector, err := NewPerfCollector(log.NewNopLogger())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +97,7 @@ func TestPerfCollectorStride(t *testing.T) {
 				}
 			}
 			perfCPUsFlag = &test.flag
-			collector, err := NewPerfCollector(slog.New(slog.NewTextHandler(io.Discard, nil)))
+			collector, err := NewPerfCollector(log.NewNopLogger())
 			if err != nil {
 				t.Fatal(err)
 			}

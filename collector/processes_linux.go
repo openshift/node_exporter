@@ -19,13 +19,14 @@ package collector
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"path"
 	"strconv"
 	"strings"
 	"syscall"
 
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/procfs"
 )
@@ -38,7 +39,7 @@ type processCollector struct {
 	procsState   *prometheus.Desc
 	pidUsed      *prometheus.Desc
 	pidMax       *prometheus.Desc
-	logger       *slog.Logger
+	logger       log.Logger
 }
 
 func init() {
@@ -46,7 +47,7 @@ func init() {
 }
 
 // NewProcessStatCollector returns a new Collector exposing process data read from the proc filesystem.
-func NewProcessStatCollector(logger *slog.Logger) (Collector, error) {
+func NewProcessStatCollector(logger log.Logger) (Collector, error) {
 	fs, err := procfs.NewFS(*procPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open procfs: %w", err)
@@ -129,10 +130,10 @@ func (c *processCollector) getAllocatedThreads() (int, map[string]int32, int, ma
 		if err != nil {
 			// PIDs can vanish between getting the list and getting stats.
 			if c.isIgnoredError(err) {
-				c.logger.Debug("file not found when retrieving stats for pid", "pid", pid.PID, "err", err)
+				level.Debug(c.logger).Log("msg", "file not found when retrieving stats for pid", "pid", pid.PID, "err", err)
 				continue
 			}
-			c.logger.Debug("error reading stat for pid", "pid", pid.PID, "err", err)
+			level.Debug(c.logger).Log("msg", "error reading stat for pid", "pid", pid.PID, "err", err)
 			return 0, nil, 0, nil, fmt.Errorf("error reading stat for pid %d: %w", pid.PID, err)
 		}
 		pids++
@@ -150,17 +151,17 @@ func (c *processCollector) getThreadStates(pid int, pidStat procfs.ProcStat, thr
 	fs, err := procfs.NewFS(procFilePath(path.Join(strconv.Itoa(pid), "task")))
 	if err != nil {
 		if c.isIgnoredError(err) {
-			c.logger.Debug("file not found when retrieving tasks for pid", "pid", pid, "err", err)
+			level.Debug(c.logger).Log("msg", "file not found when retrieving tasks for pid", "pid", pid, "err", err)
 			return nil
 		}
-		c.logger.Debug("error reading tasks for pid", "pid", pid, "err", err)
+		level.Debug(c.logger).Log("msg", "error reading tasks for pid", "pid", pid, "err", err)
 		return fmt.Errorf("error reading task for pid %d: %w", pid, err)
 	}
 
 	t, err := fs.AllProcs()
 	if err != nil {
 		if c.isIgnoredError(err) {
-			c.logger.Debug("file not found when retrieving tasks for pid", "pid", pid, "err", err)
+			level.Debug(c.logger).Log("msg", "file not found when retrieving tasks for pid", "pid", pid, "err", err)
 			return nil
 		}
 		return fmt.Errorf("unable to list all threads for pid: %d %w", pid, err)
@@ -174,10 +175,10 @@ func (c *processCollector) getThreadStates(pid int, pidStat procfs.ProcStat, thr
 		threadStat, err := thread.Stat()
 		if err != nil {
 			if c.isIgnoredError(err) {
-				c.logger.Debug("file not found when retrieving stats for thread", "pid", pid, "threadId", thread.PID, "err", err)
+				level.Debug(c.logger).Log("msg", "file not found when retrieving stats for thread", "pid", pid, "threadId", thread.PID, "err", err)
 				continue
 			}
-			c.logger.Debug("error reading stat for thread", "pid", pid, "threadId", thread.PID, "err", err)
+			level.Debug(c.logger).Log("msg", "error reading stat for thread", "pid", pid, "threadId", thread.PID, "err", err)
 			return fmt.Errorf("error reading stat for pid:%d thread:%d err:%w", pid, thread.PID, err)
 		}
 		threadStates[threadStat.State]++

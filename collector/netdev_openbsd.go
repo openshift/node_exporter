@@ -18,7 +18,9 @@ package collector
 
 import (
 	"errors"
-	"log/slog"
+
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 /*
@@ -29,7 +31,7 @@ import (
 */
 import "C"
 
-func getNetDevStats(filter *deviceFilter, logger *slog.Logger) (netDevStats, error) {
+func getNetDevStats(filter *deviceFilter, logger log.Logger) (netDevStats, error) {
 	netDev := netDevStats{}
 
 	var ifap, ifa *C.struct_ifaddrs
@@ -45,7 +47,7 @@ func getNetDevStats(filter *deviceFilter, logger *slog.Logger) (netDevStats, err
 
 		dev := C.GoString(ifa.ifa_name)
 		if filter.ignored(dev) {
-			logger.Debug("Ignoring device", "device", dev)
+			level.Debug(logger).Log("msg", "Ignoring device", "device", dev)
 			continue
 		}
 
@@ -69,9 +71,4 @@ func getNetDevStats(filter *deviceFilter, logger *slog.Logger) (netDevStats, err
 	}
 
 	return netDev, nil
-}
-
-func getNetDevLabels() (map[string]map[string]string, error) {
-	// to be implemented if needed
-	return nil, nil
 }

@@ -17,6 +17,7 @@
 package collector
 
 import (
+	"github.com/go-kit/log/level"
 	"golang.org/x/sys/unix"
 )
 
@@ -41,15 +42,15 @@ func (c *filesystemCollector) GetStats() (stats []filesystemStats, err error) {
 	stats = []filesystemStats{}
 	for _, v := range mnt {
 		mountpoint := unix.ByteSliceToString(v.F_mntonname[:])
-		if c.mountPointFilter.ignored(mountpoint) {
-			c.logger.Debug("Ignoring mount point", "mountpoint", mountpoint)
+		if c.excludedMountPointsPattern.MatchString(mountpoint) {
+			level.Debug(c.logger).Log("msg", "Ignoring mount point", "mountpoint", mountpoint)
 			continue
 		}
 
 		device := unix.ByteSliceToString(v.F_mntfromname[:])
 		fstype := unix.ByteSliceToString(v.F_fstypename[:])
-		if c.fsTypeFilter.ignored(fstype) {
-			c.logger.Debug("Ignoring fs type", "type", fstype)
+		if c.excludedFSTypesPattern.MatchString(fstype) {
+			level.Debug(c.logger).Log("msg", "Ignoring fs type", "type", fstype)
 			continue
 		}
 

@@ -19,10 +19,10 @@ package collector
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"sync"
 	"unsafe"
 
+	"github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -43,7 +43,7 @@ type devstatCollector struct {
 	duration  typedDesc
 	busyTime  typedDesc
 	blocks    typedDesc
-	logger    *slog.Logger
+	logger    log.Logger
 }
 
 func init() {
@@ -51,7 +51,7 @@ func init() {
 }
 
 // NewDevstatCollector returns a new Collector exposing Device stats.
-func NewDevstatCollector(logger *slog.Logger) (Collector, error) {
+func NewDevstatCollector(logger log.Logger) (Collector, error) {
 	return &devstatCollector{
 		devinfo: &C.struct_devinfo{},
 		bytes: typedDesc{prometheus.NewDesc(

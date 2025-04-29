@@ -17,10 +17,8 @@
 package collector
 
 import (
-	"log/slog"
-	"unsafe"
-
 	"golang.org/x/sys/unix"
+	"unsafe"
 )
 
 const (
@@ -48,17 +46,6 @@ type bcachestats struct {
 	Highflips      int64
 	Highflops      int64
 	Dmaflips       int64
-}
-
-type meminfoCollector struct {
-	logger *slog.Logger
-}
-
-// NewMeminfoCollector returns a new Collector exposing memory stats.
-func NewMeminfoCollector(logger *slog.Logger) (Collector, error) {
-	return &meminfoCollector{
-		logger: logger,
-	}, nil
 }
 
 func (c *meminfoCollector) getMemInfo() (map[string]float64, error) {

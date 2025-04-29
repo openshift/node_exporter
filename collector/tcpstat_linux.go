@@ -18,11 +18,11 @@ package collector
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"syscall"
 	"unsafe"
 
+	"github.com/go-kit/log"
 	"github.com/mdlayher/netlink"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -60,7 +60,7 @@ const (
 
 type tcpStatCollector struct {
 	desc   typedDesc
-	logger *slog.Logger
+	logger log.Logger
 }
 
 func init() {
@@ -68,7 +68,7 @@ func init() {
 }
 
 // NewTCPStatCollector returns a new Collector exposing network stats.
-func NewTCPStatCollector(logger *slog.Logger) (Collector, error) {
+func NewTCPStatCollector(logger log.Logger) (Collector, error) {
 	return &tcpStatCollector{
 		desc: typedDesc{prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "tcp", "connection_states"),

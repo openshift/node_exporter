@@ -19,10 +19,11 @@ package collector
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"strconv"
 
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/procfs/sysfs"
 )
@@ -30,7 +31,7 @@ import (
 type infinibandCollector struct {
 	fs          sysfs.FS
 	metricDescs map[string]*prometheus.Desc
-	logger      *slog.Logger
+	logger      log.Logger
 	subsystem   string
 }
 
@@ -39,7 +40,7 @@ func init() {
 }
 
 // NewInfiniBandCollector returns a new Collector exposing InfiniBand stats.
-func NewInfiniBandCollector(logger *slog.Logger) (Collector, error) {
+func NewInfiniBandCollector(logger log.Logger) (Collector, error) {
 	var i infinibandCollector
 	var err error
 
@@ -115,7 +116,7 @@ func (c *infinibandCollector) Update(ch chan<- prometheus.Metric) error {
 	devices, err := c.fs.InfiniBandClass()
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			c.logger.Debug("infiniband statistics not found, skipping")
+			level.Debug(c.logger).Log("msg", "infiniband statistics not found, skipping")
 			return ErrNoData
 		}
 		return fmt.Errorf("error obtaining InfiniBand class info: %w", err)

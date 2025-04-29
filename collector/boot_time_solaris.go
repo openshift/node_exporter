@@ -17,21 +17,21 @@
 package collector
 
 import (
+	"github.com/go-kit/log"
 	"github.com/illumos/go-kstat"
 	"github.com/prometheus/client_golang/prometheus"
-	"log/slog"
 )
 
 type bootTimeCollector struct {
 	boottime typedDesc
-	logger   *slog.Logger
+	logger   log.Logger
 }
 
 func init() {
 	registerCollector("boottime", defaultEnabled, newBootTimeCollector)
 }
 
-func newBootTimeCollector(logger *slog.Logger) (Collector, error) {
+func newBootTimeCollector(logger log.Logger) (Collector, error) {
 	return &bootTimeCollector{
 		boottime: typedDesc{
 			prometheus.NewDesc(

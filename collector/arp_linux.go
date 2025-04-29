@@ -17,11 +17,13 @@
 package collector
 
 import (
+	"errors"
 	"fmt"
-	"log/slog"
+	"net"
 
 	"github.com/alecthomas/kingpin/v2"
-	"github.com/jsimonetti/rtnetlink/v2/rtnl"
+	"github.com/go-kit/log"
+	"github.com/jsimonetti/rtnetlink"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/procfs"
 	"golang.org/x/sys/unix"
@@ -37,7 +39,7 @@ type arpCollector struct {
 	fs           procfs.FS
 	deviceFilter deviceFilter
 	entries      *prometheus.Desc
-	logger       *slog.Logger
+	logger       log.Logger
 }
 
 func init() {
@@ -45,7 +47,7 @@ func init() {
 }
 
 // NewARPCollector returns a new Collector exposing ARP stats.
-func NewARPCollector(logger *slog.Logger) (Collector, error) {
+func NewARPCollector(logger log.Logger) (Collector, error) {
 	fs, err := procfs.NewFS(*procPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open procfs: %w", err)
@@ -74,30 +76,44 @@ func getTotalArpEntries(deviceEntries []procfs.ARPEntry) map[string]uint32 {
 }
 
 func getTotalArpEntriesRTNL() (map[string]uint32, error) {
-	conn, err := rtnl.Dial(nil)
+	conn, err := rtnetlink.Dial(nil)
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
 
-	// Neighbors will also contain IPv6 neighbors, but since this is purely an ARP collector,
-	// restrict to AF_INET.
-	neighbors, err := conn.Neighbours(nil, unix.AF_INET)
+	neighbors, err := conn.Neigh.List()
 	if err != nil {
 		return nil, err
 	}
 
-	// Map of interface name to ARP neighbor count.
-	entries := make(map[string]uint32)
+	ifIndexEntries := make(map[uint32]uint32)
 
 	for _, n := range neighbors {
-		// Skip entries which have state NUD_NOARP to conform to output of /proc/net/arp.
-		if n.State&unix.NUD_NOARP == 0 {
-			entries[n.Interface.Name]++
+		// Neighbors will also contain IPv6 neighbors, but since this is purely an ARP collector,
+		// restrict to AF_INET. Also skip entries which have state NUD_NOARP to conform to output
+		// of /proc/net/arp.
+		if n.Family == unix.AF_INET && n.State&unix.NUD_NOARP == 0 {
+			ifIndexEntries[n.Index]++
 		}
 	}
 
-	return entries, nil
+	enumEntries := make(map[string]uint32)
+
+	// Convert interface indexes to names.
+	for ifIndex, entryCount := range ifIndexEntries {
+		iface, err := net.InterfaceByIndex(int(ifIndex))
+		if err != nil {
+			if errors.Unwrap(err).Error() == "no such network interface" {
+				continue
+			}
+			return nil, err
+		}
+
+		enumEntries[iface.Name] = entryCount
+	}
+
+	return enumEntries, nil
 }
 
 func (c *arpCollector) Update(ch chan<- prometheus.Metric) error {

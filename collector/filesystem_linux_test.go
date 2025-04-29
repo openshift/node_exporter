@@ -17,12 +17,11 @@
 package collector
 
 import (
-	"io"
-	"log/slog"
 	"strings"
 	"testing"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/go-kit/log"
 )
 
 func Test_parseFilesystemLabelsError(t *testing.T) {
@@ -83,22 +82,14 @@ func TestMountPointDetails(t *testing.T) {
 		"/var/lib/kubelet/plugins/kubernetes.io/vsphere-volume/mounts/[vsanDatastore]	bafb9e5a-8856-7e6c-699c-801844e77a4a/kubernetes-dynamic-pvc-3eba5bba-48a3-11e8-89ab-005056b92113.vmdk": "",
 	}
 
-	filesystems, err := mountPointDetails(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	filesystems, err := mountPointDetails(log.NewNopLogger())
 	if err != nil {
 		t.Log(err)
 	}
 
-	foundSet := map[string]bool{}
 	for _, fs := range filesystems {
 		if _, ok := expected[fs.mountPoint]; !ok {
 			t.Errorf("Got unexpected %s", fs.mountPoint)
-		}
-		foundSet[fs.mountPoint] = true
-	}
-
-	for mountPoint := range expected {
-		if _, ok := foundSet[mountPoint]; !ok {
-			t.Errorf("Expected %s, got nothing", mountPoint)
 		}
 	}
 }
@@ -112,7 +103,7 @@ func TestMountsFallback(t *testing.T) {
 		"/": "",
 	}
 
-	filesystems, err := mountPointDetails(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	filesystems, err := mountPointDetails(log.NewNopLogger())
 	if err != nil {
 		t.Log(err)
 	}
@@ -140,7 +131,7 @@ func TestPathRootfs(t *testing.T) {
 		"/sys/fs/cgroup": "",
 	}
 
-	filesystems, err := mountPointDetails(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	filesystems, err := mountPointDetails(log.NewNopLogger())
 	if err != nil {
 		t.Log(err)
 	}

@@ -18,17 +18,14 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 
 	"github.com/coreos/go-systemd/v22/activation"
-	"github.com/mdlayher/vsock"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	config_util "github.com/prometheus/common/config"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
@@ -266,7 +263,7 @@ func ConfigToTLSConfig(c *TLSConfig) (*tls.Config, error) {
 
 // ServeMultiple starts the server on the given listeners. The FlagConfig is
 // also passed on to Serve.
-func ServeMultiple(listeners []net.Listener, server *http.Server, flags *FlagConfig, logger *slog.Logger) error {
+func ServeMultiple(listeners []net.Listener, server *http.Server, flags *FlagConfig, logger log.Logger) error {
 	errs := new(errgroup.Group)
 	for _, l := range listeners {
 		l := l
@@ -278,18 +275,16 @@ func ServeMultiple(listeners []net.Listener, server *http.Server, flags *FlagCon
 }
 
 // ListenAndServe starts the server on addresses given in WebListenAddresses in
-// the FlagConfig. When address starts looks like vsock://:{port}, it listens on
-// vsock. More info check https://wiki.qemu.org/Features/VirtioVsock .
-// Or instead uses systemd socket activated listeners if WebSystemdSocket in the
-// FlagConfig is true.
-// The FlagConfig is also passed on to ServeMultiple.
-func ListenAndServe(server *http.Server, flags *FlagConfig, logger *slog.Logger) error {
+// the FlagConfig or instead uses systemd socket activated listeners if
+// WebSystemdSocket in the FlagConfig is true. The FlagConfig is also passed on
+// to ServeMultiple.
+func ListenAndServe(server *http.Server, flags *FlagConfig, logger log.Logger) error {
 	if flags.WebSystemdSocket == nil && (flags.WebListenAddresses == nil || len(*flags.WebListenAddresses) == 0) {
 		return ErrNoListeners
 	}
 
 	if flags.WebSystemdSocket != nil && *flags.WebSystemdSocket {
-		logger.Info("Listening on systemd activated listeners instead of port listeners.")
+		level.Info(logger).Log("msg", "Listening on systemd activated listeners instead of port listeners.")
 		listeners, err := activation.Listeners()
 		if err != nil {
 			return err
@@ -302,22 +297,9 @@ func ListenAndServe(server *http.Server, flags *FlagConfig, logger *slog.Logger)
 
 	listeners := make([]net.Listener, 0, len(*flags.WebListenAddresses))
 	for _, address := range *flags.WebListenAddresses {
-		var err error
-		var listener net.Listener
-		if strings.HasPrefix(address, "vsock://") {
-			port, err := parseVsockPort(address)
-			if err != nil {
-				return err
-			}
-			listener, err = vsock.Listen(port, nil)
-			if err != nil {
-				return err
-			}
-		} else {
-			listener, err = net.Listen("tcp", address)
-			if err != nil {
-				return err
-			}
+		listener, err := net.Listen("tcp", address)
+		if err != nil {
+			return err
 		}
 		defer listener.Close()
 		listeners = append(listeners, listener)
@@ -325,29 +307,13 @@ func ListenAndServe(server *http.Server, flags *FlagConfig, logger *slog.Logger)
 	return ServeMultiple(listeners, server, flags, logger)
 }
 
-func parseVsockPort(address string) (uint32, error) {
-	uri, err := url.Parse(address)
-	if err != nil {
-		return 0, err
-	}
-	_, portStr, err := net.SplitHostPort(uri.Host)
-	if err != nil {
-		return 0, err
-	}
-	port, err := strconv.ParseUint(portStr, 10, 32)
-	if err != nil {
-		return 0, err
-	}
-	return uint32(port), nil
-}
-
 // Server starts the server on the given listener. Based on the file path
 // WebConfigFile in the FlagConfig, TLS or basic auth could be enabled.
-func Serve(l net.Listener, server *http.Server, flags *FlagConfig, logger *slog.Logger) error {
-	logger.Info("Listening on", "address", l.Addr().String())
+func Serve(l net.Listener, server *http.Server, flags *FlagConfig, logger log.Logger) error {
+	level.Info(logger).Log("msg", "Listening on", "address", l.Addr().String())
 	tlsConfigPath := *flags.WebConfigFile
 	if tlsConfigPath == "" {
-		logger.Info("TLS is disabled.", "http2", false, "address", l.Addr().String())
+		level.Info(logger).Log("msg", "TLS is disabled.", "http2", false, "address", l.Addr().String())
 		return server.Serve(l)
 	}
 
@@ -380,10 +346,10 @@ func Serve(l net.Listener, server *http.Server, flags *FlagConfig, logger *slog.
 			server.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 		}
 		// Valid TLS config.
-		logger.Info("TLS is enabled.", "http2", c.HTTPConfig.HTTP2, "address", l.Addr().String())
+		level.Info(logger).Log("msg", "TLS is enabled.", "http2", c.HTTPConfig.HTTP2, "address", l.Addr().String())
 	case errNoTLSConfig:
 		// No TLS config, back to plain HTTP.
-		logger.Info("TLS is disabled.", "http2", false, "address", l.Addr().String())
+		level.Info(logger).Log("msg", "TLS is disabled.", "http2", false, "address", l.Addr().String())
 		return server.Serve(l)
 	default:
 		// Invalid TLS config.
@@ -511,6 +477,6 @@ func (tv *TLSVersion) MarshalYAML() (interface{}, error) {
 // tlsConfigPath, TLS or basic auth could be enabled.
 //
 // Deprecated: Use ListenAndServe instead.
-func Listen(server *http.Server, flags *FlagConfig, logger *slog.Logger) error {
+func Listen(server *http.Server, flags *FlagConfig, logger log.Logger) error {
 	return ListenAndServe(server, flags, logger)
 }

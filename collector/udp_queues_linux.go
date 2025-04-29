@@ -19,9 +19,10 @@ package collector
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/procfs"
 )
@@ -30,7 +31,7 @@ type (
 	udpQueuesCollector struct {
 		fs     procfs.FS
 		desc   *prometheus.Desc
-		logger *slog.Logger
+		logger log.Logger
 	}
 )
 
@@ -39,7 +40,7 @@ func init() {
 }
 
 // NewUDPqueuesCollector returns a new Collector exposing network udp queued bytes.
-func NewUDPqueuesCollector(logger *slog.Logger) (Collector, error) {
+func NewUDPqueuesCollector(logger log.Logger) (Collector, error) {
 	fs, err := procfs.NewFS(*procPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open procfs: %w", err)
@@ -63,7 +64,7 @@ func (c *udpQueuesCollector) Update(ch chan<- prometheus.Metric) error {
 		ch <- prometheus.MustNewConstMetric(c.desc, prometheus.GaugeValue, float64(s4.RxQueueLength), "rx", "v4")
 	} else {
 		if errors.Is(errIPv4, os.ErrNotExist) {
-			c.logger.Debug("not collecting ipv4 based metrics")
+			level.Debug(c.logger).Log("msg", "not collecting ipv4 based metrics")
 		} else {
 			return fmt.Errorf("couldn't get udp queued bytes: %w", errIPv4)
 		}
@@ -75,7 +76,7 @@ func (c *udpQueuesCollector) Update(ch chan<- prometheus.Metric) error {
 		ch <- prometheus.MustNewConstMetric(c.desc, prometheus.GaugeValue, float64(s6.RxQueueLength), "rx", "v6")
 	} else {
 		if errors.Is(errIPv6, os.ErrNotExist) {
-			c.logger.Debug("not collecting ipv6 based metrics")
+			level.Debug(c.logger).Log("msg", "not collecting ipv6 based metrics")
 		} else {
 			return fmt.Errorf("couldn't get udp6 queued bytes: %w", errIPv6)
 		}

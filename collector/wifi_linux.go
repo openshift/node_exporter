@@ -20,11 +20,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/mdlayher/wifi"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -44,7 +45,7 @@ type wifiCollector struct {
 	stationTransmitFailedTotal   *prometheus.Desc
 	stationBeaconLossTotal       *prometheus.Desc
 
-	logger *slog.Logger
+	logger log.Logger
 }
 
 var (
@@ -66,7 +67,7 @@ type wifiStater interface {
 }
 
 // NewWifiCollector returns a new Collector exposing Wifi statistics.
-func NewWifiCollector(logger *slog.Logger) (Collector, error) {
+func NewWifiCollector(logger log.Logger) (Collector, error) {
 	const (
 		subsystem = "wifi"
 	)
@@ -168,11 +169,11 @@ func (c *wifiCollector) Update(ch chan<- prometheus.Metric) error {
 	if err != nil {
 		// Cannot access wifi metrics, report no error.
 		if errors.Is(err, os.ErrNotExist) {
-			c.logger.Debug("wifi collector metrics are not available for this system")
+			level.Debug(c.logger).Log("msg", "wifi collector metrics are not available for this system")
 			return ErrNoData
 		}
 		if errors.Is(err, os.ErrPermission) {
-			c.logger.Debug("wifi collector got permission denied when accessing metrics")
+			level.Debug(c.logger).Log("msg", "wifi collector got permission denied when accessing metrics")
 			return ErrNoData
 		}
 
@@ -191,7 +192,7 @@ func (c *wifiCollector) Update(ch chan<- prometheus.Metric) error {
 			continue
 		}
 
-		c.logger.Debug("probing wifi device with type", "wifi", ifi.Name, "type", ifi.Type)
+		level.Debug(c.logger).Log("msg", "probing wifi device with type", "wifi", ifi.Name, "type", ifi.Type)
 
 		ch <- prometheus.MustNewConstMetric(
 			c.interfaceFrequencyHertz,
@@ -209,7 +210,7 @@ func (c *wifiCollector) Update(ch chan<- prometheus.Metric) error {
 		case err == nil:
 			c.updateBSSStats(ch, ifi.Name, bss)
 		case errors.Is(err, os.ErrNotExist):
-			c.logger.Debug("BSS information not found for wifi device", "name", ifi.Name)
+			level.Debug(c.logger).Log("msg", "BSS information not found for wifi device", "name", ifi.Name)
 		default:
 			return fmt.Errorf("failed to retrieve BSS for device %s: %v",
 				ifi.Name, err)
@@ -222,7 +223,7 @@ func (c *wifiCollector) Update(ch chan<- prometheus.Metric) error {
 				c.updateStationStats(ch, ifi.Name, station)
 			}
 		case errors.Is(err, os.ErrNotExist):
-			c.logger.Debug("station information not found for wifi device", "name", ifi.Name)
+			level.Debug(c.logger).Log("msg", "station information not found for wifi device", "name", ifi.Name)
 		default:
 			return fmt.Errorf("failed to retrieve station info for device %q: %v",
 				ifi.Name, err)

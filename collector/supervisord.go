@@ -19,13 +19,14 @@ package collector
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/mattn/go-xmlrpc"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -40,7 +41,7 @@ type supervisordCollector struct {
 	stateDesc      *prometheus.Desc
 	exitStatusDesc *prometheus.Desc
 	startTimeDesc  *prometheus.Desc
-	logger         *slog.Logger
+	logger         log.Logger
 }
 
 func init() {
@@ -48,7 +49,7 @@ func init() {
 }
 
 // NewSupervisordCollector returns a new Collector exposing supervisord statistics.
-func NewSupervisordCollector(logger *slog.Logger) (Collector, error) {
+func NewSupervisordCollector(logger log.Logger) (Collector, error) {
 	var (
 		subsystem  = "supervisord"
 		labelNames = []string{"name", "group"}
@@ -68,7 +69,7 @@ func NewSupervisordCollector(logger *slog.Logger) (Collector, error) {
 		xrpc = xmlrpc.NewClient(*supervisordURL)
 	}
 
-	logger.Warn("This collector is deprecated and will be removed in the next major version release.")
+	level.Warn(logger).Log("msg", "This collector is deprecated and will be removed in the next major version release.")
 
 	return &supervisordCollector{
 		upDesc: prometheus.NewDesc(
@@ -173,7 +174,7 @@ func (c *supervisordCollector) Update(ch chan<- prometheus.Metric) error {
 		} else {
 			ch <- prometheus.MustNewConstMetric(c.upDesc, prometheus.GaugeValue, 0, labels...)
 		}
-		c.logger.Debug("process info", "group", info.Group, "name", info.Name, "state", info.StateName, "pid", info.PID)
+		level.Debug(c.logger).Log("msg", "process info", "group", info.Group, "name", info.Name, "state", info.StateName, "pid", info.PID)
 	}
 
 	return nil

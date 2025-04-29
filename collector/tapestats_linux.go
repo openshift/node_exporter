@@ -18,11 +18,12 @@ package collector
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"regexp"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/procfs/sysfs"
 )
@@ -44,7 +45,7 @@ type tapestatsCollector struct {
 	writeTimeSeconds      *prometheus.Desc
 	residualTotal         *prometheus.Desc
 	fs                    sysfs.FS
-	logger                *slog.Logger
+	logger                log.Logger
 }
 
 func init() {
@@ -53,7 +54,7 @@ func init() {
 
 // NewTapestatsCollector returns a new Collector exposing tape device stats.
 // Docs from https://www.kernel.org/doc/html/latest/scsi/st.html#sysfs-and-statistics-for-tape-devices
-func NewTapestatsCollector(logger *slog.Logger) (Collector, error) {
+func NewTapestatsCollector(logger log.Logger) (Collector, error) {
 	var tapeLabelNames = []string{"device"}
 
 	fs, err := sysfs.NewFS(*sysPath)
@@ -125,7 +126,7 @@ func (c *tapestatsCollector) Update(ch chan<- prometheus.Metric) error {
 	tapes, err := c.fs.SCSITapeClass()
 	if err != nil {
 		if os.IsNotExist(err) {
-			c.logger.Debug("scsi_tape stats not found, skipping")
+			level.Debug(c.logger).Log("msg", "scsi_tape stats not found, skipping")
 			return ErrNoData
 		}
 		return fmt.Errorf("error obtaining SCSITape class info: %s", err)
@@ -133,7 +134,7 @@ func (c *tapestatsCollector) Update(ch chan<- prometheus.Metric) error {
 
 	for _, tape := range tapes {
 		if c.ignoredDevicesPattern.MatchString(tape.Name) {
-			c.logger.Debug("Ignoring device", "device", tape.Name)
+			level.Debug(c.logger).Log("msg", "Ignoring device", "device", tape.Name)
 			continue
 		}
 		ch <- prometheus.MustNewConstMetric(c.ioNow, prometheus.GaugeValue, float64(tape.Counters.InFlight), tape.Name)

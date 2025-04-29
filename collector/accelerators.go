@@ -15,12 +15,13 @@ package collector
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/yaml.v2"
 )
@@ -47,7 +48,7 @@ type vendorData struct {
 
 type acceleratorsCollector struct {
 	pciDevicesPath    string
-	logger            *slog.Logger
+	logger            log.Logger
 	vendorToDeviceMap map[string]vendorData
 }
 
@@ -66,7 +67,7 @@ func init() {
 }
 
 // NewAcceleratorCollector returns a new Collector exposing accelerator cards count.
-func NewAcceleratorCollector(logger *slog.Logger) (Collector, error) {
+func NewAcceleratorCollector(logger log.Logger) (Collector, error) {
 	vendorToDeviceMap, err := prepareVendorModelData(*mappingFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the accelerator configuration: %v", err)
@@ -88,22 +89,22 @@ func (a *acceleratorsCollector) Update(ch chan<- prometheus.Metric) error {
 		pciID := pciDevice.Name()
 		vendorID, err := a.getVendorID(pciID)
 		if err != nil {
-			a.logger.Error("skipping pci device", "name", pciDevice.Name(), "err", err.Error())
+			level.Error(a.logger).Log("msg", "failed to get pci vendor ID", "name", pciDevice.Name(), "err", err)
 			continue
 		}
 		deviceID, err := a.getDeviceID(pciID)
 		if err != nil {
-			a.logger.Error("failed to get pci device ID", "name", pciDevice.Name(), "err", err.Error())
+			level.Error(a.logger).Log("msg", "failed to get pci device ID", "name", pciDevice.Name(), "err", err)
 			continue
 		}
 
-		a.logger.Debug("checking pci device", "name", pciDevice.Name(), "device", deviceID)
+		level.Debug(a.logger).Log("msg", "checking pci device", "vendor", vendorID, "device", deviceID)
 
 		cardData, isMonitored := a.isMonitoredAccelerator(vendorID, deviceID, pciID)
 		if !isMonitored {
 			continue
 		}
-		a.logger.Debug("accelerator device found", "vendor", cardData.vendor, "model", cardData.model, "id", cardData.id)
+		level.Debug(a.logger).Log("msg", "accelerator device found", "vendor", cardData.vendor, "model", cardData.model)
 		ch <- prometheus.MustNewConstMetric(acceleratorCardsDesc, prometheus.CounterValue, float64(1), cardData.vendor, cardData.model, cardData.id)
 	}
 

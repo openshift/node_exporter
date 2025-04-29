@@ -1,9 +1,5 @@
 package wifi
 
-import (
-	"time"
-)
-
 // A Client is a type which can access WiFi device actions and statistics
 // using operating system-specific operations.
 type Client struct {
@@ -53,24 +49,6 @@ func (c *Client) BSS(ifi *Interface) (*BSS, error) {
 }
 
 // StationInfo retrieves all station statistics about a WiFi interface.
-//
-// Since v0.2.0: if there are no stations, an empty slice is returned instead
-// of an error.
 func (c *Client) StationInfo(ifi *Interface) ([]*StationInfo, error) {
 	return c.c.StationInfo(ifi)
-}
-
-// SetDeadline sets the read and write deadlines associated with the connection.
-func (c *Client) SetDeadline(t time.Time) error {
-	return c.c.SetDeadline(t)
-}
-
-// SetReadDeadline sets the read deadline associated with the connection.
-func (c *Client) SetReadDeadline(t time.Time) error {
-	return c.c.SetReadDeadline(t)
-}
-
-// SetWriteDeadline sets the write deadline associated with the connection.
-func (c *Client) SetWriteDeadline(t time.Time) error {
-	return c.c.SetWriteDeadline(t)
 }

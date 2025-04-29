@@ -18,11 +18,11 @@ package collector
 
 import (
 	"fmt"
-	"io"
-	"log/slog"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
@@ -127,7 +127,7 @@ func TestXfrmStats(t *testing.T) {
 	`
 	*procPath = "fixtures/proc"
 
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	logger := log.NewLogfmtLogger(os.Stderr)
 	c, err := NewXfrmCollector(logger)
 	if err != nil {
 		t.Fatal(err)

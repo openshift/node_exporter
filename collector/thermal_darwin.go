@@ -47,9 +47,9 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"unsafe"
 
+	"github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -57,7 +57,7 @@ type thermCollector struct {
 	cpuSchedulerLimit typedDesc
 	cpuAvailableCPU   typedDesc
 	cpuSpeedLimit     typedDesc
-	logger            *slog.Logger
+	logger            log.Logger
 }
 
 const thermal = "thermal"
@@ -67,7 +67,7 @@ func init() {
 }
 
 // NewThermCollector returns a new Collector exposing current CPU power levels.
-func NewThermCollector(logger *slog.Logger) (Collector, error) {
+func NewThermCollector(logger log.Logger) (Collector, error) {
 	return &thermCollector{
 		cpuSchedulerLimit: typedDesc{
 			desc: prometheus.NewDesc(

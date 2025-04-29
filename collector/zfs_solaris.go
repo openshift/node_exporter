@@ -17,9 +17,9 @@
 package collector
 
 import (
-	"log/slog"
 	"strings"
 
+	"github.com/go-kit/log"
 	"github.com/illumos/go-kstat"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -54,14 +54,18 @@ type zfsCollector struct {
 	arcstatsSize                 *prometheus.Desc
 	zfetchstatsHits              *prometheus.Desc
 	zfetchstatsMisses            *prometheus.Desc
-	logger                       *slog.Logger
+	logger                       log.Logger
 }
 
 const (
 	zfsCollectorSubsystem = "zfs"
 )
 
-func NewZFSCollector(logger *slog.Logger) (Collector, error) {
+func init() {
+	registerCollector("zfs", defaultEnabled, NewZfsCollector)
+}
+
+func NewZfsCollector(logger log.Logger) (Collector, error) {
 	return &zfsCollector{
 		abdstatsLinearCount: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, zfsCollectorSubsystem, "abdstats_linear_count_total"),

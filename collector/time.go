@@ -17,9 +17,10 @@
 package collector
 
 import (
-	"log/slog"
 	"time"
 
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -28,7 +29,7 @@ type timeCollector struct {
 	zone                  typedDesc
 	clocksourcesAvailable typedDesc
 	clocksourceCurrent    typedDesc
-	logger                *slog.Logger
+	logger                log.Logger
 }
 
 func init() {
@@ -37,7 +38,7 @@ func init() {
 
 // NewTimeCollector returns a new Collector exposing the current system time in
 // seconds since epoch.
-func NewTimeCollector(logger *slog.Logger) (Collector, error) {
+func NewTimeCollector(logger log.Logger) (Collector, error) {
 	const subsystem = "time"
 	return &timeCollector{
 		now: typedDesc{prometheus.NewDesc(
@@ -69,9 +70,9 @@ func (c *timeCollector) Update(ch chan<- prometheus.Metric) error {
 	nowSec := float64(now.UnixNano()) / 1e9
 	zone, zoneOffset := now.Zone()
 
-	c.logger.Debug("Return time", "now", nowSec)
+	level.Debug(c.logger).Log("msg", "Return time", "now", nowSec)
 	ch <- c.now.mustNewConstMetric(nowSec)
-	c.logger.Debug("Zone offset", "offset", zoneOffset, "time_zone", zone)
+	level.Debug(c.logger).Log("msg", "Zone offset", "offset", zoneOffset, "time_zone", zone)
 	ch <- c.zone.mustNewConstMetric(float64(zoneOffset), zone)
 	return c.update(ch)
 }
