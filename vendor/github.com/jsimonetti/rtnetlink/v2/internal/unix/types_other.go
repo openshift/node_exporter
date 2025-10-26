@@ -35,6 +35,7 @@ const (
 	IFA_CACHEINFO                              = 0x6
 	IFA_MULTICAST                              = 0x7
 	IFA_FLAGS                                  = 0x8
+	IFA_RT_PRIORITY                            = 0x9
 	IFF_UP                                     = 0x1
 	IFF_BROADCAST                              = 0x2
 	IFF_LOOPBACK                               = 0x8
@@ -103,6 +104,8 @@ const (
 	IFLA_LINKINFO                              = 0x12
 	IFLA_LINKMODE                              = 0x11
 	IFLA_IFALIAS                               = 0x14
+	IFLA_PROP_LIST                             = 0x34
+	IFLA_ALT_IFNAME                            = 0x35
 	IFLA_MASTER                                = 0xa
 	IFLA_CARRIER                               = 0x21
 	IFLA_CARRIER_CHANGES                       = 0x23

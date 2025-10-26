@@ -29,6 +29,7 @@ require (
 	github.com/safchain/ethtool v0.6.2
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621
 	golang.org/x/sys v0.37.0
+	gopkg.in/yaml.v2 v2.4.0
 	howett.net/plist v1.0.1
 )
 
