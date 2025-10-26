@@ -87,9 +87,9 @@ func NewCPUCollector(logger *slog.Logger) (Collector, error) {
 	isolcpus, err := sfs.IsolatedCPUs()
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return nil, fmt.Errorf("Unable to get isolated cpus: %w", err)
+			return nil, fmt.Errorf("unable to get isolated cpus: %w", err)
 		}
-		logger.Debug("Could not open isolated file", "error", err)
+		logger.Debug("couldn't open isolated file", "error", err)
 	}
 
 	c := &cpuCollector{
@@ -224,7 +224,7 @@ func (c *cpuCollector) updateInfo(ch chan<- prometheus.Metric) error {
 	cpuFreqEnabled, ok := collectorState["cpufreq"]
 	if !ok || cpuFreqEnabled == nil {
 		c.logger.Debug("cpufreq key missing or nil value in collectorState map")
-	} else if !*cpuFreqEnabled {
+	} else if *cpuFreqEnabled {
 		for _, cpu := range info {
 			ch <- prometheus.MustNewConstMetric(c.cpuFrequencyHz,
 				prometheus.GaugeValue,
