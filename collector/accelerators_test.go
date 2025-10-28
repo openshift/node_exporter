@@ -30,11 +30,21 @@ type testAcceleratorCollector struct {
 }
 
 func (c testAcceleratorCollector) Collect(ch chan<- prometheus.Metric) {
-	c.xc.Update(ch)
+	sink := make(chan prometheus.Metric)
+	go func() {
+		if err := c.xc.Update(sink); err != nil {
+			panic(fmt.Errorf("failed to update collector: %s", err))
+		}
+		close(sink)
+	}()
+
+	for m := range sink {
+		ch <- m
+	}
 }
 
 func (c testAcceleratorCollector) Describe(ch chan<- *prometheus.Desc) {
-	prometheus.DescribeByCollect(c, ch)
+	// No-op for testing
 }
 
 func TestAccelerator(t *testing.T) {
@@ -50,7 +60,7 @@ func TestAccelerator(t *testing.T) {
 	}
 
 	*sysPath = "fixtures/accelerators/sys"
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	c := &acceleratorsCollector{
 		pciDevicesPath:    filepath.Join(*sysPath, "bus/pci/devices"),
 		logger:            logger,
@@ -59,15 +69,6 @@ func TestAccelerator(t *testing.T) {
 
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(&testAcceleratorCollector{xc: c})
-
-	sink := make(chan prometheus.Metric)
-	go func() {
-		err = c.Update(sink)
-		if err != nil {
-			panic(fmt.Errorf("failed to update collector: %s", err))
-		}
-		close(sink)
-	}()
 
 	err = testutil.GatherAndCompare(reg, strings.NewReader(testcase))
 	if err != nil {
