@@ -49,7 +49,7 @@ func TestAccelerator(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	*sysPath = "fixtures/sys"
+	*sysPath = "fixtures/accelerators/sys"
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	c := &acceleratorsCollector{
 		pciDevicesPath:    filepath.Join(*sysPath, "bus/pci/devices"),
@@ -78,11 +78,11 @@ func TestAccelerator(t *testing.T) {
 func Test_prepareVendorModelData_badMapping(t *testing.T) {
 	_, err := prepareVendorModelData("testdata/accelerators_test_data_duplicated_vendors.bad.yaml")
 	if err == nil {
-		t.Fatal(err)
+		t.Fatal("expecting error but got none")
 	}
 
 	_, err = prepareVendorModelData("testdata/accelerators_test_data_duplicated_device_ids.bad.yaml")
 	if err == nil {
-		t.Fatal(err)
+		t.Fatal("expecting error but got none")
 	}
 }
