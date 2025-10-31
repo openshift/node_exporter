@@ -39,6 +39,7 @@ const (
 	IFA_CACHEINFO                              = linux.IFA_CACHEINFO
 	IFA_MULTICAST                              = linux.IFA_MULTICAST
 	IFA_FLAGS                                  = linux.IFA_FLAGS
+	IFA_RT_PRIORITY                            = linux.IFA_RT_PRIORITY
 	IFF_UP                                     = linux.IFF_UP
 	IFF_BROADCAST                              = linux.IFF_BROADCAST
 	IFF_LOOPBACK                               = linux.IFF_LOOPBACK
@@ -107,6 +108,8 @@ const (
 	IFLA_LINKINFO                              = linux.IFLA_LINKINFO
 	IFLA_LINKMODE                              = linux.IFLA_LINKMODE
 	IFLA_IFALIAS                               = linux.IFLA_IFALIAS
+	IFLA_PROP_LIST                             = linux.IFLA_PROP_LIST
+	IFLA_ALT_IFNAME                            = linux.IFLA_ALT_IFNAME
 	IFLA_MASTER                                = linux.IFLA_MASTER
 	IFLA_CARRIER                               = linux.IFLA_CARRIER
 	IFLA_CARRIER_CHANGES                       = linux.IFLA_CARRIER_CHANGES

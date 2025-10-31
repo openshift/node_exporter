@@ -41,6 +41,9 @@ type LinkMessage struct {
 
 	// Attributes List
 	Attributes *LinkAttributes
+
+	// A response was filtered as requested, see NLM_F_DUMP_FILTERED
+	filtered bool
 }
 
 // MarshalBinary marshals a LinkMessage into a byte slice.
@@ -184,14 +187,26 @@ func (l *LinkService) Set(req *LinkMessage) error {
 
 func (l *LinkService) list(kind string) ([]LinkMessage, error) {
 	req := &LinkMessage{}
-	if kind != "" {
-		req.Attributes = &LinkAttributes{
-			Info: &LinkInfo{Kind: kind},
-		}
+	flags := netlink.Request | netlink.Dump
+
+	if kind == "" {
+		return l.execute(req, unix.RTM_GETLINK, flags)
 	}
 
-	flags := netlink.Request | netlink.Dump
-	return l.execute(req, unix.RTM_GETLINK, flags)
+	req.Attributes = &LinkAttributes{
+		Info: &LinkInfo{Kind: kind},
+	}
+
+	msgs, err := l.execute(req, unix.RTM_GETLINK, flags)
+
+	// All filtered links are marked by a NLM_F_DUMP_FILTERED flag
+	// no other links present in a response, so just check the first one
+	if err == nil && len(msgs) > 0 && !msgs[0].filtered {
+		msgs = []LinkMessage{}
+	}
+
+	return msgs, err
+
 }
 
 // ListByKind retrieves all interfaces of a specific kind.
@@ -208,6 +223,7 @@ func (l *LinkService) List() ([]LinkMessage, error) {
 type LinkAttributes struct {
 	Address          net.HardwareAddr // Interface L2 address
 	Alias            *string          // Interface alias name
+	AltNames         []string         // Alternative interface names
 	Broadcast        net.HardwareAddr // L2 broadcast address
 	Carrier          *uint8           // Current physical link state of the interface.
 	CarrierChanges   *uint32          // Number of times the link has seen a change from UP to DOWN and vice versa
@@ -331,6 +347,17 @@ func (a *LinkAttributes) decode(ad *netlink.AttributeDecoder) error {
 		case unix.IFLA_XDP:
 			a.XDP = &LinkXDP{}
 			ad.Nested(a.XDP.decode)
+		case unix.IFLA_PROP_LIST:
+			// read nested encoded property list
+			nad, err := netlink.NewAttributeDecoder(ad.Bytes())
+			if err != nil {
+				return err
+			}
+			for nad.Next() {
+				if nad.Type() == unix.IFLA_ALT_IFNAME {
+					a.AltNames = append(a.AltNames, nad.String())
+				}
+			}
 		}
 	}
 
@@ -341,6 +368,10 @@ func (a *LinkAttributes) decode(ad *netlink.AttributeDecoder) error {
 func (a *LinkAttributes) encode(ae *netlink.AttributeEncoder) error {
 	if a.Name != "" {
 		ae.String(unix.IFLA_IFNAME, a.Name)
+	}
+
+	if a.Alias != nil {
+		ae.String(unix.IFLA_IFALIAS, *a.Alias)
 	}
 
 	if a.Type != 0 {

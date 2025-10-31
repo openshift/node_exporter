@@ -86,23 +86,26 @@ func (a *acceleratorsCollector) Update(ch chan<- prometheus.Metric) error {
 
 	for _, pciDevice := range pciDevices {
 		pciID := pciDevice.Name()
+
 		vendorID, err := a.getVendorID(pciID)
 		if err != nil {
-			a.logger.Error("skipping pci device", "name", pciDevice.Name(), "err", err.Error())
+			a.logger.Error("skipping pci device", "id", pciID, "err", err.Error())
 			continue
 		}
+
 		deviceID, err := a.getDeviceID(pciID)
 		if err != nil {
-			a.logger.Error("failed to get pci device ID", "name", pciDevice.Name(), "err", err.Error())
+			a.logger.Error("failed to get pci device ID", "id", pciID, "err", err.Error())
 			continue
 		}
 
-		a.logger.Debug("checking pci device", "name", pciDevice.Name(), "device", deviceID)
-
+		a.logger.Debug("checking pci device", "id", pciID, "device", deviceID)
 		cardData, isMonitored := a.isMonitoredAccelerator(vendorID, deviceID, pciID)
 		if !isMonitored {
+			a.logger.Debug("skipping pci device", "id", pciID, "device", deviceID)
 			continue
 		}
+
 		a.logger.Debug("accelerator device found", "vendor", cardData.vendor, "model", cardData.model, "id", cardData.id)
 		ch <- prometheus.MustNewConstMetric(acceleratorCardsDesc, prometheus.CounterValue, float64(1), cardData.vendor, cardData.model, cardData.id)
 	}
@@ -137,7 +140,7 @@ func (a *acceleratorsCollector) isMonitoredAccelerator(vendor, device, pciID str
 	if !ok {
 		return cardData{}, false
 	}
-	return cardData{vendorData.vendorName, deviceDesc, pciID}, true
+	return cardData{vendor: vendorData.vendorName, model: deviceDesc, id: pciID}, true
 }
 
 func prepareVendorModelData(mappingFilePath string) (map[string]vendorData, error) {
