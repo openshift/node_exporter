@@ -28,6 +28,7 @@ require (
 	github.com/prometheus/procfs v0.20.1
 	github.com/safchain/ethtool v0.7.0
 	golang.org/x/sys v0.42.0
+	gopkg.in/yaml.v2 v2.4.0
 	howett.net/plist v1.0.1
 )
 
@@ -42,6 +43,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mdlayher/genetlink v1.3.2 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
