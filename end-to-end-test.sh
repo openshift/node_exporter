@@ -37,6 +37,7 @@ supported_collectors() {
 enabled_collectors=$(cat << COLLECTORS
   arp
   bcache
+  bcachefs
   bonding
   btrfs
   buddyinfo
@@ -56,6 +57,7 @@ enabled_collectors=$(cat << COLLECTORS
   infiniband
   interrupts
   ipvs
+  kernel_hung
   ksmd
   lnstat
   loadavg
@@ -127,10 +129,13 @@ case "${arch}" in
     ;;
 esac
 
-keep=0; update=0; verbose=0
-while getopts 'hkuv' opt
+extra_flags=""; keep=0; update=0; verbose=0
+while getopts 'e:hkuv' opt
 do
   case "$opt" in
+    e)
+      extra_flags="${OPTARG}"
+      ;;
     k)
       keep=1
       ;;
@@ -158,6 +163,7 @@ then
 fi
 
 collector_flags=$(cat << FLAGS
+  ${extra_flags}
   ${cpu_info_collector}
   --collector.arp.device-exclude=nope
   --collector.bcache.priorityStats
