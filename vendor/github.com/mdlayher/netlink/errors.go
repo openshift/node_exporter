@@ -20,6 +20,10 @@ var (
 
 var errNotSupported = errors.New("operation not supported")
 
+// errMessageTruncated is returned when a received message was truncated
+// because the receive buffer was too small.
+var errMessageTruncated = errors.New("message truncated")
+
 // notSupported provides a concise constructor for "not supported" errors.
 func notSupported(op string) error {
 	return newOpError(op, errNotSupported)
@@ -69,6 +73,11 @@ type OpError struct {
 	// is not set, both of these fields will be empty.
 	Message string
 	Offset  int
+
+	// Sequence is the netlink message sequence number associated with the
+	// error. This field is only populated if the error was produced as the
+	// result of a netlink message; otherwise, it will be zero.
+	Sequence uint32
 }
 
 // newOpError is a small wrapper for creating an OpError. As a convenience, it

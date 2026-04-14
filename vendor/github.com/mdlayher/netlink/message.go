@@ -1,8 +1,10 @@
 package netlink
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"iter"
 	"unsafe"
 
 	"github.com/mdlayher/netlink/nlenc"
@@ -293,7 +295,8 @@ func checkMessage(m Message) error {
 		// Error code is a negative integer, convert it into an OS-specific raw
 		// system call error, but do not wrap with os.NewSyscallError to signify
 		// that this error was produced by a netlink message; not a system call.
-		Err: newError(-1 * int(c)),
+		Err:      newError(-1 * int(c)),
+		Sequence: m.Header.Sequence,
 	}
 
 	// TODO(mdlayher): investigate the Capped flag.
@@ -344,4 +347,42 @@ func checkMessage(m Message) error {
 	// Explicitly ignore ad.Err: malformed TLVs, just return the OpError with
 	// the info we have.
 	return oerr
+}
+
+// parseMessagesIter returns an iterator over netlink messages in b.
+// Each iteration yields a Message and any error encountered during parsing.
+// The iterator stops on the first error or when all messages are parsed.
+//
+// If b is less that NLMSG_HDRLEN bytes, no error or messages will be returned.
+// The same applies for any trailing bytes whose length is less than
+// NLMSG_HDRLEN.
+func parseMessagesIter(b []byte) iter.Seq2[Message, error] {
+	return func(yield func(Message, error) bool) {
+		for len(b) >= nlmsgHeaderLen {
+			length := binary.NativeEndian.Uint32(b[0:4])
+			if int(length) < nlmsgHeaderLen {
+				yield(Message{}, errIncorrectMessageLength)
+				return
+			}
+
+			alength := nlmsgAlign(int(length))
+			if alength > len(b) {
+				yield(Message{}, errShortMessage)
+				return
+			}
+
+			var message Message
+			if err := message.UnmarshalBinary(b[:alength]); err != nil {
+				yield(Message{}, err)
+				return
+			}
+
+			// Return if the consumer has stopped iterating.
+			if !yield(message, nil) {
+				return
+			}
+
+			b = b[alength:]
+		}
+	}
 }

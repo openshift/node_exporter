@@ -1,6 +1,6 @@
 # Node exporter
 
-[![CircleCI](https://circleci.com/gh/prometheus/node_exporter/tree/master.svg?style=shield)][circleci]
+[![Build Status](https://github.com/prometheus/node_exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/prometheus/node_exporter/actions/workflows/ci.yml)
 ![bsd workflow](https://github.com/prometheus/node_exporter/actions/workflows/bsd.yml/badge.svg)
 ![golangci-lint workflow](https://github.com/prometheus/node_exporter/actions/workflows/golangci-lint.yml/badge.svg)
 [![Docker Repository on Quay](https://quay.io/repository/prometheus/node-exporter/status)][quay]
@@ -134,6 +134,7 @@ filesystem | Exposes filesystem statistics, such as disk space used. | Darwin, D
 hwmon | Expose hardware monitoring and sensor data from `/sys/class/hwmon/`. | Linux
 infiniband | Exposes network statistics specific to InfiniBand and Intel OmniPath configurations. | Linux
 ipvs | Exposes IPVS status from `/proc/net/ip_vs` and stats from `/proc/net/ip_vs_stats`. | Linux
+kernel_hung | Exposes number of tasks that have been detected as hung from `/proc/sys/kernel/hung_task_detect_count`. | Linux
 loadavg | Exposes load average. | Darwin, Dragonfly, FreeBSD, Linux, NetBSD, OpenBSD, Solaris
 mdadm | Exposes statistics about devices in `/proc/mdstat` (does nothing if no `/proc/mdstat` present). | Linux
 meminfo | Exposes memory statistics. | Darwin, Dragonfly, FreeBSD, Linux, OpenBSD

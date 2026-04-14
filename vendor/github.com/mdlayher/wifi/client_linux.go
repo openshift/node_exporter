@@ -1,5 +1,4 @@
 //go:build linux
-// +build linux
 
 package wifi
 
@@ -98,7 +97,7 @@ func (c *client) Interfaces() ([]*Interface, error) {
 		return nil, err
 	}
 
-	return parseInterfaces(msgs)
+	return ParseInterfaces(msgs)
 }
 
 // Connect starts connecting the interface to the specified ssid.
@@ -225,7 +224,7 @@ func (c *client) StationInfo(ifi *Interface) ([]*StationInfo, error) {
 
 	stations := make([]*StationInfo, len(msgs))
 	for i := range msgs {
-		if stations[i], err = parseStationInfo(msgs[i].Data); err != nil {
+		if stations[i], err = ParseStationInfo(msgs[i].Data); err != nil {
 			return nil, err
 		}
 	}
@@ -510,7 +509,7 @@ func parseGetScanResult(msgs []genetlink.Message) ([]*BSS, error) {
 
 // parseInterfaces parses zero or more Interfaces from nl80211 interface
 // messages.
-func parseInterfaces(msgs []genetlink.Message) ([]*Interface, error) {
+func ParseInterfaces(msgs []genetlink.Message) ([]*Interface, error) {
 	ifis := make([]*Interface, 0, len(msgs))
 	for _, m := range msgs {
 		attrs, err := netlink.UnmarshalAttributes(m.Data)
@@ -575,6 +574,8 @@ func (ifi *Interface) parseAttributes(attrs []netlink.Attribute) error {
 			ifi.Device = int(nlenc.Uint64(a.Data))
 		case unix.NL80211_ATTR_WIPHY_FREQ:
 			ifi.Frequency = int(nlenc.Uint32(a.Data))
+		case unix.NL80211_ATTR_CHANNEL_WIDTH:
+			ifi.ChannelWidth = ChannelWidth(nlenc.Uint32(a.Data))
 		}
 	}
 
@@ -636,6 +637,12 @@ func (b *BSS) parseAttributes(attrs []netlink.Attribute) error {
 			// NOTE: BSSStatus copies the ordering of nl80211's BSS status
 			// constants.  This may not be the case on other operating systems.
 			b.Status = BSSStatus(nlenc.Uint32(a.Data))
+		case unix.NL80211_BSS_SIGNAL_MBM:
+			// * @NL80211_BSS_SIGNAL_MBM: signal strength in mBm (100*dBm)
+			b.Signal = nlenc.Int32(a.Data)
+		case unix.NL80211_BSS_SIGNAL_UNSPEC:
+			// * @NL80211_BSS_SIGNAL_UNSPEC: signal strength in unspecified units (usually percent)
+			b.SignalUnspecified = nlenc.Uint32(a.Data)
 		case unix.NL80211_BSS_INFORMATION_ELEMENTS:
 			ies, err := parseIEs(a.Data)
 			if err != nil {
@@ -667,9 +674,9 @@ func (b *BSS) parseAttributes(attrs []netlink.Attribute) error {
 	return nil
 }
 
-// parseStationInfo parses StationInfo attributes from a byte slice of
+// ParseStationInfo parses StationInfo attributes from a byte slice of
 // netlink attributes.
-func parseStationInfo(b []byte) (*StationInfo, error) {
+func ParseStationInfo(b []byte) (*StationInfo, error) {
 	attrs, err := netlink.UnmarshalAttributes(b)
 	if err != nil {
 		return nil, err
@@ -956,7 +963,7 @@ func decodeRSN(b []byte) (*RSNInfo, error) {
 	}
 
 	ri.PairwiseCiphers = make([]RSNCipher, 0, pcCount) // Pre-allocate with known capacity
-	for i := 0; i < pcCount; i++ {
+	for range pcCount {
 		sel := binary.BigEndian.Uint32(b[pos : pos+4])
 		ri.PairwiseCiphers = append(ri.PairwiseCiphers, RSNCipher(sel))
 		pos += 4
@@ -984,7 +991,7 @@ func decodeRSN(b []byte) (*RSNInfo, error) {
 	}
 
 	ri.AKMs = make([]RSNAKM, 0, akmCount) // Pre-allocate with known capacity
-	for i := 0; i < akmCount; i++ {
+	for range akmCount {
 		sel := binary.BigEndian.Uint32(b[pos : pos+4])
 		ri.AKMs = append(ri.AKMs, RSNAKM(sel))
 		pos += 4
