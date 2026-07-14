@@ -49,7 +49,7 @@ github.com/ema/qdisc
 # github.com/godbus/dbus/v5 v5.2.2
 ## explicit; go 1.20
 github.com/godbus/dbus/v5
-# github.com/golang-jwt/jwt/v5 v5.3.0
+# github.com/golang-jwt/jwt/v5 v5.3.1
 ## explicit; go 1.21
 github.com/golang-jwt/jwt/v5
 # github.com/google/go-cmp v0.7.0
@@ -79,8 +79,6 @@ github.com/jpillora/backoff
 github.com/jsimonetti/rtnetlink/v2
 github.com/jsimonetti/rtnetlink/v2/internal/unix
 github.com/jsimonetti/rtnetlink/v2/rtnl
-# github.com/kr/text v0.2.0
-## explicit
 # github.com/kylelemons/godebug v1.1.0
 ## explicit; go 1.11
 github.com/kylelemons/godebug/diff
@@ -90,24 +88,24 @@ github.com/lufia/iostat
 # github.com/mattn/go-xmlrpc v0.0.3
 ## explicit; go 1.10
 github.com/mattn/go-xmlrpc
-# github.com/mdlayher/ethtool v0.6.0
+# github.com/mdlayher/ethtool v0.6.1
 ## explicit; go 1.25.0
 github.com/mdlayher/ethtool
-# github.com/mdlayher/genetlink v1.3.2
-## explicit; go 1.18
+# github.com/mdlayher/genetlink v1.4.0
+## explicit; go 1.25.0
 github.com/mdlayher/genetlink
-# github.com/mdlayher/netlink v1.10.0
-## explicit; go 1.24.0
+# github.com/mdlayher/netlink v1.11.2
+## explicit; go 1.25.0
 github.com/mdlayher/netlink
 github.com/mdlayher/netlink/nlenc
-# github.com/mdlayher/socket v0.5.1
-## explicit; go 1.20
+# github.com/mdlayher/socket v0.6.1
+## explicit; go 1.25.0
 github.com/mdlayher/socket
-# github.com/mdlayher/vsock v1.2.1
-## explicit; go 1.20
+# github.com/mdlayher/vsock v1.3.0
+## explicit; go 1.25.0
 github.com/mdlayher/vsock
-# github.com/mdlayher/wifi v0.7.2
-## explicit; go 1.24.0
+# github.com/mdlayher/wifi v0.8.0
+## explicit; go 1.25.0
 github.com/mdlayher/wifi
 # github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
 ## explicit
@@ -115,8 +113,8 @@ github.com/munnerz/goautoneg
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 ## explicit
 github.com/mwitkow/go-conntrack
-# github.com/opencontainers/selinux v1.13.1
-## explicit; go 1.19
+# github.com/opencontainers/selinux v1.15.1
+## explicit; go 1.22
 github.com/opencontainers/selinux/go-selinux
 github.com/opencontainers/selinux/pkg/pwalkdir
 # github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55
@@ -141,19 +139,19 @@ github.com/prometheus/client_golang/prometheus/testutil/promlint/validations
 # github.com/prometheus/client_model v0.6.2
 ## explicit; go 1.22.0
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.67.5
-## explicit; go 1.24.0
+# github.com/prometheus/common v0.70.0
+## explicit; go 1.25.0
 github.com/prometheus/common/config
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
 github.com/prometheus/common/promslog
 github.com/prometheus/common/promslog/flag
 github.com/prometheus/common/version
-# github.com/prometheus/exporter-toolkit v0.16.0
+# github.com/prometheus/exporter-toolkit v0.17.1
 ## explicit; go 1.25.0
 github.com/prometheus/exporter-toolkit/web
 github.com/prometheus/exporter-toolkit/web/kingpinflag
-# github.com/prometheus/procfs v0.20.1
+# github.com/prometheus/procfs v0.21.1
 ## explicit; go 1.25.0
 github.com/prometheus/procfs
 github.com/prometheus/procfs/bcache
@@ -182,12 +180,12 @@ go.uber.org/multierr
 # go.yaml.in/yaml/v2 v2.4.4
 ## explicit; go 1.15
 go.yaml.in/yaml/v2
-# golang.org/x/crypto v0.49.0
+# golang.org/x/crypto v0.54.0
 ## explicit; go 1.25.0
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/pbkdf2
-# golang.org/x/net v0.52.0
+# golang.org/x/net v0.57.0
 ## explicit; go 1.25.0
 golang.org/x/net/bpf
 golang.org/x/net/http/httpguts
@@ -207,15 +205,15 @@ golang.org/x/net/trace
 golang.org/x/oauth2
 golang.org/x/oauth2/clientcredentials
 golang.org/x/oauth2/internal
-# golang.org/x/sync v0.20.0
+# golang.org/x/sync v0.22.0
 ## explicit; go 1.25.0
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.42.0
+# golang.org/x/sys v0.47.0
 ## explicit; go 1.25.0
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.35.0
+# golang.org/x/text v0.40.0
 ## explicit; go 1.25.0
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
