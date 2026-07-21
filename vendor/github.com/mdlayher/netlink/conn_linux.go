@@ -1,5 +1,4 @@
 //go:build linux
-// +build linux
 
 package netlink
 
@@ -148,7 +147,8 @@ func (c *conn) Receive() ([]Message, error) {
 // getBuffer returns the buffer to use for receiving messages and a function to
 // release it back to the pool if applicable. If the pool is not configured, a
 // new buffer is allocated by peeking the size of the next message to be
-// received.
+// received. The buffer size is aligned to the next multiple of the alignment of a netlink
+// message, to avoid panic when parsing messages from the buffer.
 func (c *conn) getBuffer() ([]byte, func(), error) {
 	if c.pool != nil {
 		bp := c.pool.Get().(*[]byte)
@@ -160,7 +160,22 @@ func (c *conn) getBuffer() ([]byte, func(), error) {
 		return nil, nil, err
 	}
 
-	return make([]byte, n), func() {}, nil
+	return make([]byte, nlmsgAlign(n)), func() {}, nil
+}
+
+// ownedBuffer trims b to the aligned size of the received datagram and, when
+// using pooled buffers, copies it to memory owned by the caller.
+func (c *conn) ownedBuffer(b []byte, n int) []byte {
+	aligned := nlmsgAlign(n)
+	if c.pool == nil {
+		return b[:aligned]
+	}
+
+	// A pooled buffer may not have an aligned length. Copy the received bytes
+	// to an aligned buffer and let the zero-value tail bytes act as padding.
+	out := make([]byte, aligned)
+	copy(out, b[:n])
+	return out
 }
 
 // ReceiveIter returns an iterator over Messages received from netlink.
@@ -190,7 +205,7 @@ func (c *conn) ReceiveIter() iter.Seq2[Message, error] {
 			return
 		}
 
-		for msg, err := range parseMessagesIter(b[:nlmsgAlign(n)]) {
+		for msg, err := range parseMessagesIter(c.ownedBuffer(b, n)) {
 			if err != nil {
 				yield(Message{}, err)
 				return
