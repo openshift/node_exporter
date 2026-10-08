@@ -60,3 +60,5 @@ require (
 )
 
 replace golang.org/x/net => github.com/openshift-sustaining/net v0.50.0-sec.4
+
+replace github.com/prometheus/procfs => github.com/redhat-chai-bot/openshift_procfs v0.0.0-20261008100206-9a0de19f6a1f
