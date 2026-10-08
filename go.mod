@@ -58,3 +58,5 @@ require (
 	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 )
+
+replace github.com/prometheus/procfs => github.com/redhat-chai-bot/openshift_procfs v0.0.0-20261008100206-9a0de19f6a1f
