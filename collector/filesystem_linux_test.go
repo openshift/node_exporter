@@ -16,8 +16,11 @@
 package collector
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
@@ -182,6 +185,50 @@ func TestMountPointDetails(t *testing.T) {
 		if _, ok := foundSet[mountPoint]; !ok {
 			t.Errorf("Expected %s, got nothing", mountPoint)
 		}
+	}
+}
+
+func TestMountPointDetailsReadsMountInfoBeyond1MiB(t *testing.T) {
+	const (
+		mountCount      = 25000
+		mountInfoLimit  = 1 << 20
+		finalMountPoint = "/mnt/final-sentinel"
+	)
+
+	procDir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(procDir, "1"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var mountInfo strings.Builder
+	for i := 0; i < mountCount-1; i++ {
+		fmt.Fprintf(&mountInfo, "%d 1 0:1 / /mnt/test-%d rw - tmpfs tmpfs rw\n", i+1, i)
+	}
+	finalMountOffset := mountInfo.Len()
+	if finalMountOffset <= mountInfoLimit {
+		t.Fatalf("final mount starts at byte %d, want beyond 1 MiB", finalMountOffset)
+	}
+	fmt.Fprintf(&mountInfo, "%d 1 0:1 / %s rw - tmpfs tmpfs rw\n", mountCount, finalMountPoint)
+	if mountInfo.Len() <= mountInfoLimit {
+		t.Fatalf("generated mountinfo is %d bytes, want more than 1 MiB", mountInfo.Len())
+	}
+	if err := os.WriteFile(filepath.Join(procDir, "1", "mountinfo"), []byte(mountInfo.String()), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	originalProcPath := *procPath
+	t.Cleanup(func() { *procPath = originalProcPath })
+	*procPath = procDir
+
+	filesystems, err := mountPointDetails(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(filesystems) != mountCount {
+		t.Fatalf("got %d mount points, want %d", len(filesystems), mountCount)
+	}
+	if got := filesystems[len(filesystems)-1].mountPoint; got != finalMountPoint {
+		t.Fatalf("final mount point is %q, want %q", got, finalMountPoint)
 	}
 }
 
