@@ -126,7 +126,7 @@ github.com/prometheus/common/version
 ## explicit; go 1.23.0
 github.com/prometheus/exporter-toolkit/web
 github.com/prometheus/exporter-toolkit/web/kingpinflag
-# github.com/prometheus/procfs v0.19.0
+# github.com/prometheus/procfs v0.19.0 => github.com/redhat-chai-bot/openshift_procfs v0.0.0-20261008100206-9a0de19f6a1f
 ## explicit; go 1.24.0
 github.com/prometheus/procfs
 github.com/prometheus/procfs/bcache
@@ -234,3 +234,4 @@ gopkg.in/yaml.v2
 ## explicit; go 1.12
 howett.net/plist
 # golang.org/x/net => github.com/openshift-sustaining/net v0.50.0-sec.4
+# github.com/prometheus/procfs => github.com/redhat-chai-bot/openshift_procfs v0.0.0-20261008100206-9a0de19f6a1f
