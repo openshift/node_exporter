@@ -1,0 +1,21 @@
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.26-openshift-4.22 AS builder
+
+WORKDIR /go/src/github.com/prometheus/node_exporter
+COPY . .
+RUN if yum install -y prometheus-promu; then export BUILD_PROMU=false; fi && make build
+
+FROM registry.ci.openshift.org/ocp/4.22:base-rhel9
+LABEL io.k8s.display-name="OpenShift Prometheus Node Exporter" \
+      io.k8s.description="Prometheus exporter for machine metrics" \
+      io.openshift.tags="prometheus,monitoring" \
+      summary="Prometheus exporter for machine metrics" \
+      maintainer="OpenShift Monitoring Team <team-monitoring@redhat.com>"
+
+COPY --from=builder /go/src/github.com/prometheus/node_exporter/node_exporter /bin/node_exporter
+
+RUN yum install -y virt-what && yum clean all && rm -rf /var/cache/*
+COPY text_collectors/virt.sh text_collectors/boots.sh /node_exporter/collectors/init/
+
+EXPOSE      9100
+USER        nobody
+ENTRYPOINT  [ "/bin/node_exporter" ]
