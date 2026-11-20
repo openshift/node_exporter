@@ -213,18 +213,20 @@ func (c *textFileCollector) Update(ch chan<- prometheus.Metric) error {
 				continue
 			}
 
-			mtime, families, err := c.processFile(path, f.Name(), ch)
+			mtime, families, err := c.processFile(path, f.Name())
 
 			for _, mf := range families {
 				// Check for metrics with inconsistent help texts and take the first help text occurrence.
 				if helpTexts, seen := metricsNamesToHelpTexts[*mf.Name]; seen {
 					if mf.Help != nil && helpTexts[0] != *mf.Help || helpTexts[1] != "" {
-						metricsNamesToHelpTexts[*mf.Name] = [2]string{helpTexts[0], *mf.Help}
+						if mf.Help != nil {
+							metricsNamesToHelpTexts[*mf.Name] = [2]string{helpTexts[0], *mf.Help}
+						}
 						errored = true
 						c.logger.Error("inconsistent metric help text",
 							"metric", *mf.Name,
 							"original_help_text", helpTexts[0],
-							"new_help_text", *mf.Help,
+							"new_help_text", mf.GetHelp(),
 							// Only the first file path will be recorded in case of two or more inconsistent help texts.
 							"file", metricsNamesToFiles[*mf.Name][0])
 						continue
@@ -285,7 +287,7 @@ func (c *textFileCollector) Update(ch chan<- prometheus.Metric) error {
 }
 
 // processFile processes a single file, returning its modification time on success.
-func (c *textFileCollector) processFile(dir, name string, ch chan<- prometheus.Metric) (*time.Time, map[string]*dto.MetricFamily, error) {
+func (c *textFileCollector) processFile(dir, name string) (*time.Time, map[string]*dto.MetricFamily, error) {
 	path := filepath.Join(dir, name)
 	f, err := os.Open(path)
 	if err != nil {
@@ -293,7 +295,7 @@ func (c *textFileCollector) processFile(dir, name string, ch chan<- prometheus.M
 	}
 	defer f.Close()
 
-	parser := expfmt.NewTextParser(model.LegacyValidation)
+	parser := expfmt.NewTextParser(model.UTF8Validation)
 	families, err := parser.TextToMetricFamilies(f)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse textfile data from %q: %w", path, err)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -100,6 +101,8 @@ func (t InterfaceType) String() string {
 		return "station"
 	case InterfaceTypeAP:
 		return "access point"
+	case InterfaceTypeAPVLAN:
+		return "access point/VLAN"
 	case InterfaceTypeWDS:
 		return "wireless distribution"
 	case InterfaceTypeMonitor:
@@ -208,6 +211,255 @@ type Interface struct {
 	ChannelWidth ChannelWidth
 }
 
+// RateModulationInfo is implemented by modulation types in this package.
+// External implementations are not supported.
+type RateModulationInfo interface {
+	// MCS is the modulation and coding scheme index.
+	GetMCS() int
+
+	// NSS is the number of spatial streams.
+	GetNSS() int
+
+	// String returns a human-readable description of the modulation info.
+	// Format is more verbose and includes all relevant information.
+	String() string
+
+	// WifiGeneration returns the WiFi generation (e.g., "802.11n (WiFi 4)", "802.11ac (WiFi 5)", "802.11ax (WiFi 6)", "802.11be (WiFi 7)")
+	WifiGeneration() string
+
+	// HasShortGI reports whether this modulation currently uses short guard interval.
+	HasShortGI() bool
+
+	// formatRateInfoWithWidth renders modulation details for RateInfo.String's
+	// iw-style output. It is unexported to prevent external implementations.
+	formatRateInfoWithWidth(channelWidth string) string
+}
+
+type BaseModulationInfo struct {
+	MCS int
+	NSS int
+}
+
+func (mi BaseModulationInfo) GetMCS() int {
+	return mi.MCS
+}
+
+func (mi BaseModulationInfo) GetNSS() int {
+	return mi.NSS
+}
+
+func (mi BaseModulationInfo) WifiGeneration() string {
+	return "unknown"
+}
+
+func (mi BaseModulationInfo) HasShortGI() bool {
+	return false
+}
+
+func (mi BaseModulationInfo) String() string {
+	return fmt.Sprintf("MCS: %d, NSS: %d", mi.MCS, mi.NSS)
+}
+
+func (mi BaseModulationInfo) formatRateInfoWithWidth(channelWidth string) string {
+	parts := []string{fmt.Sprintf("MCS %d", mi.MCS), fmt.Sprintf("NSS %d", mi.NSS)}
+	if channelWidth == "" {
+		return strings.Join(parts, " ")
+	}
+
+	parts = append(parts, channelWidth)
+	return strings.Join(parts, " ")
+}
+
+// HTModulationInfo represents modulation information for HT rates.
+// MCS Indexes originally range from 0 to 31. NSS is coded in the MCS index as follows:
+// NSS = (MCS / 8) + 1
+// MCS = MCS % 8
+// original MCS index is available as HTMCS
+type HTModulationInfo struct {
+	BaseModulationInfo
+	HTMCS   int
+	ShortGI bool
+}
+
+func (mi HTModulationInfo) WifiGeneration() string {
+	return "802.11n (WiFi 4)"
+}
+
+func (mi HTModulationInfo) HasShortGI() bool {
+	return mi.ShortGI
+}
+
+func (mi HTModulationInfo) String() string {
+	return fmt.Sprintf("HT-MCS: %d, MCS: %d, NSS: %d, Short GI: %t", mi.HTMCS, mi.MCS, mi.NSS, mi.ShortGI)
+}
+
+func (mi HTModulationInfo) formatRateInfoWithWidth(channelWidth string) string {
+	parts := []string{fmt.Sprintf("MCS %d", mi.HTMCS)}
+	if channelWidth != "" {
+		parts = append(parts, channelWidth)
+	}
+	if channelWidth != "" && mi.HasShortGI() {
+		parts = append(parts, "short GI")
+	}
+
+	return strings.Join(parts, " ")
+}
+
+// VHTModulationInfo represents modulation information for VHT rates.
+type VHTModulationInfo struct {
+	BaseModulationInfo
+	ShortGI bool
+}
+
+func (mi VHTModulationInfo) WifiGeneration() string {
+	return "802.11ac (WiFi 5)"
+}
+
+func (mi VHTModulationInfo) HasShortGI() bool {
+	return mi.ShortGI
+}
+
+func (mi VHTModulationInfo) String() string {
+	return fmt.Sprintf("VHT-MCS: %d, NSS: %d, Short GI: %t", mi.MCS, mi.NSS, mi.ShortGI)
+}
+
+func (mi VHTModulationInfo) formatRateInfoWithWidth(channelWidth string) string {
+	parts := []string{fmt.Sprintf("VHT-MCS %d", mi.MCS)}
+	if channelWidth != "" {
+		parts = append(parts, channelWidth)
+	}
+	if channelWidth != "" && mi.HasShortGI() {
+		parts = append(parts, "short GI")
+	}
+	parts = append(parts, fmt.Sprintf("VHT-NSS %d", mi.NSS))
+
+	return strings.Join(parts, " ")
+}
+
+type HEModulationInfo struct {
+	BaseModulationInfo
+	GI      int
+	DCM     int
+	RUAlloc int
+}
+
+func (mi HEModulationInfo) WifiGeneration() string {
+	return "802.11ax (WiFi 6)"
+}
+
+func (mi HEModulationInfo) String() string {
+	return fmt.Sprintf("HE-MCS: %d, NSS: %d, GI: %d, DCM: %d, RUAlloc: %d", mi.MCS, mi.NSS, mi.GI, mi.DCM, mi.RUAlloc)
+}
+
+func (mi HEModulationInfo) formatRateInfoWithWidth(channelWidth string) string {
+	parts := []string{}
+	if channelWidth != "" {
+		parts = append(parts, channelWidth)
+	}
+
+	parts = append(parts,
+		fmt.Sprintf("HE-MCS %d", mi.MCS),
+		fmt.Sprintf("HE-NSS %d", mi.NSS),
+		fmt.Sprintf("HE-GI %d", mi.GI),
+		fmt.Sprintf("HE-DCM %d", mi.DCM),
+		fmt.Sprintf("HE-RU-ALLOC %d", mi.RUAlloc),
+	)
+
+	return strings.Join(parts, " ")
+}
+
+type EHTModulationInfo struct {
+	BaseModulationInfo
+	GI      int
+	RUAlloc int
+}
+
+func (mi EHTModulationInfo) WifiGeneration() string {
+	return "802.11be (WiFi 7)"
+}
+
+func (mi EHTModulationInfo) String() string {
+	return fmt.Sprintf("EHT-MCS: %d, NSS: %d, GI: %d, RUAlloc: %d", mi.MCS, mi.NSS, mi.GI, mi.RUAlloc)
+}
+
+func (mi EHTModulationInfo) formatRateInfoWithWidth(channelWidth string) string {
+	parts := []string{}
+	if channelWidth != "" {
+		parts = append(parts, channelWidth)
+	}
+
+	parts = append(parts,
+		fmt.Sprintf("EHT-MCS %d", mi.MCS),
+		fmt.Sprintf("EHT-NSS %d", mi.NSS),
+		fmt.Sprintf("EHT-GI %d", mi.GI),
+		fmt.Sprintf("EHT-RU-ALLOC %d", mi.RUAlloc),
+	)
+
+	return strings.Join(parts, " ")
+}
+
+// RateModulationInfoType indicates the type of modulation used for a rate.
+type RateModulationInfoType int
+
+const (
+	RateModulationInfoTypeHT RateModulationInfoType = iota
+	RateModulationInfoTypeVHT
+	RateModulationInfoTypeHE
+	RateModulationInfoTypeEHT
+	RateModulationInfoTypeLegacy
+	RateModulationInfoTypeUNKNOWN
+)
+
+// rateInfo provides information about the receive or transmit rate of
+// an interface.
+type RateInfo struct {
+	// Bitrate in 100 kbit/s units (nl80211 rate_info convention).
+	// For example, 867 means 86.7 MBit/s.
+	Bitrate int
+
+	// The type of modulation used. Can also be inferred from Modulation.(type)
+	ModulationType RateModulationInfoType
+
+	// Modulation information.
+	Modulation RateModulationInfo
+
+	// Channel width used for this rate.
+	ChannelWidth ChannelWidth
+}
+
+func bitrateStr(bitrate int) string {
+	if bitrate > 0 {
+		return fmt.Sprintf("%d.%d MBit/s", bitrate/10, bitrate%10)
+	}
+	return "(unknown)"
+}
+
+func iwChannelWidthString(w ChannelWidth) string {
+	return strings.ReplaceAll(strings.ReplaceAll(w.String(), " ", ""), "+", "P")
+}
+
+// String returns the bitrate and modulation details formatted similarly to
+// iw's parse_bitrate output, including iw-style token ordering.
+func (r RateInfo) String() string {
+	// Keep output intentionally close to iw's parse_bitrate token order.
+	// This looks unusual in places (for example VHT-NSS appearing after width
+	// and optional short GI), but it matches iw-style formatting.
+	parts := []string{bitrateStr(r.Bitrate)}
+	width := iwChannelWidthString(r.ChannelWidth)
+
+	// No modulation details: print bitrate plus channel width only.
+	if r.Modulation == nil {
+		parts = append(parts, width)
+		return strings.Join(parts, " ")
+	}
+
+	if formatted := r.Modulation.formatRateInfoWithWidth(width); formatted != "" {
+		parts = append(parts, formatted)
+	}
+
+	return strings.Join(parts, " ")
+}
+
 // StationInfo contains statistics about a WiFi interface operating in
 // station mode.
 type StationInfo struct {
@@ -255,6 +507,12 @@ type StationInfo struct {
 
 	// The number of times a beacon loss was detected.
 	BeaconLoss int
+
+	// The current receive rate and detailed modulation information.
+	ReceiveRateInfo RateInfo
+
+	// The current transmit rate and detailed modulation information.
+	TransmitRateInfo RateInfo
 }
 
 // BSSLoad is an Information Element containing measurements of the load on the BSS.
@@ -354,6 +612,249 @@ func (s BSSStatus) String() string {
 	default:
 		return fmt.Sprintf("unknown(%d)", s)
 	}
+}
+
+// A PHY represents the physical attributes of a wireless device.
+type PHY struct {
+	// The index of the interface.
+	Index int
+
+	// The name of the interface.
+	Name string
+
+	// The interface types this device supports.
+	SupportedIftypes []InterfaceType
+
+	// The software-only interface types this device supports.
+	SoftwareIftypes []InterfaceType
+
+	// An array of attributes related to each radio frequency band.
+	BandAttributes []BandAttributes
+
+	// A description of what combinations of interfaces the device can
+	// support running simultaneously, on virtual MACs.
+	InterfaceCombinations []InterfaceCombination
+
+	// All the attributes the kernel has told us about, but we haven't
+	// parsed.
+	Extra map[uint16][]byte
+}
+
+// BandAttributes represent the RF band-specific attributes.
+type BandAttributes struct {
+	// High Throughput (802.11n) device capabilities (nil if not supported).
+	HTCapabilities *HTCapabilities
+
+	// Very High Throughput (802.11ac) device capabilities (nil if not supported).
+	VHTCapabilities *VHTCapabilities
+
+	// Minimum spacing between A-MPDU frames.  Used for both HT and VHT
+	// capable devices.
+	MinRxAMPDUSpacing time.Duration
+
+	// Per-frequency (channel) attributes.
+	FrequencyAttributes []FrequencyAttrs
+
+	// Per-bitrate attributes.
+	BitrateAttributes []BitrateAttrs
+}
+
+// HTCapabilities represents 802.11n (High Throughput) capabilities.  This group
+// of attributes is specific to each band of frequencies.  Failure to support
+// any given attribute may be due to lack support in the driver or the firmware,
+// not only in the hardware.  Some of them may also be overridden during station
+// association.
+//
+// The fields represent those in the HT Capabilities element (802.11-2016,
+// 9.4.2.56).  Notably missing is information about the device's Spatial
+// Multiplexing Power Save (SMPS) capability.  SMPS support must be determined
+// by retrieving the device feature flags (not yet supported).
+type HTCapabilities struct {
+	// Device supports Low Density Parity Check codes.
+	RxLDPC bool
+
+	// Device supports 40MHz channels (in addition to 20MHz channels).
+	CW40 bool
+
+	// Device supports HT Greenfield (802.11n-only) mode, in which a/b/g
+	// frames will be ignored.
+	HTGreenfield bool
+
+	// Device supports short guard intervals in 20MHz channels.
+	SGI20 bool
+
+	// Device supports short guard intervals in 40MHz channels.
+	SGI40 bool
+
+	// Device supports Space-Time Block Coding transmission.
+	TxSTBC bool
+
+	// Number of STBC receive streams supported by the device.  Valid values
+	// are 0-3.
+	RxSTBCStreams uint8
+
+	// Device supports delayed Block Ack frames when acknowledging an
+	// A-MPDU.
+	HTDelayedBlockAck bool
+
+	// Device supports long (7935 bytes) maximum A-MSDU length, compared to
+	// standard 3839 bytes.
+	LongMaxAMSDULength bool
+
+	// Device supports DSSS/CCK in 40MHz channels.
+	DSSSCCKHT40 bool
+
+	// (2.4GHz) Band cannot tolerate 40MHz channels because someone has
+	// requested it support 20MHz channels.
+	FortyMhzIntolerant bool
+
+	// Device supports L-SIG (non-HT) Transmit Oppportunity protection.
+	LSIGTxOPProtection bool
+
+	// Maximum receivable A-MPDU (Aggregated MAC Protocol Data Unit) frame
+	// size.
+	MaxRxAMPDULength int
+
+	// Supported MCS for HT mode
+	// Todo:
+	// - Parse them are according to Section 7.3.2.56.4 IEEE 80211n
+	SupportedMCS [16]byte
+}
+
+// VHTCapabilities represents 802.11ac (Very High Throughput) capabilities.
+//
+// The fields represent those in the VHT Capabilities element (802.11-2020,
+// 9.4.2.157).
+type VHTCapabilities struct {
+	// Maximum MPDU length supported by the device.
+	MaxMPDULength int
+
+	// Device supports 160MHz channel width.
+	VHT160 bool
+
+	// Device supports 80+80MHz channel width (non-contiguous 160MHz) along with 160MHz channel.
+	VHT8080 bool
+
+	// Device supports receiving Low Density Parity Check codes.
+	RXLDPC bool
+
+	// Device supports short guard intervals in 80MHz channels.
+	ShortGI80 bool
+
+	// Device supports short guard intervals in 160MHz and 80+80MHz channels.
+	ShortGI160 bool
+
+	// Device supports transmission of at least 2x1 Space-Time Block Coding transmission.
+	TXSTBC bool
+
+	// Number of STBC receive streams supported by the device. Valid values are 0-4.
+	RXSTBC int
+
+	// Device supports SU (Single User) Beamforming as a transmitter.
+	SuBeamFormer bool
+
+	// Device supports SU (Single User) Beamforming as a receiver.
+	SuBeamFormee bool
+
+	// Number of sounding antennas supported by the device for SU Beamforming transmission.
+	BFAntenna int
+
+	// Maximum sounding dimensions supported by the device for SU Beamforming.
+	SoundingDimension int
+
+	// Device supports MU (Multi-User) Beamforming as a transmitter.
+	MuBeamformer bool
+
+	// Device supports MU (Multi-User) Beamforming as a receiver.
+	MuBeamformee bool
+
+	// Device supports VHT TXOP power save mode.
+	VTHTXOPPS bool
+
+	// Device supports HT Control field when operating in VHT mode.
+	HTCVHT bool
+
+	// Maximum A-MPDU (Aggregated MAC Protocol Data Unit) frame size supported by the device.
+	MaxAMPDU int
+
+	// Device supports VHT Link Adaptation capabilities. Valid values
+	// specify the type of link adaptation supported (e.g., no feedback,
+	// unsolicited feedback, or both).
+	VHTLinkAdapt int
+
+	// Device supports receive antenna pattern consistency.
+	RXAntennaPattern bool
+
+	// Device supports transmit antenna pattern consistency.
+	TXAntennaPattern bool
+
+	//Indicates whether the STA is capable of interpreting the Extended NSS BW
+	//Support subfield of the VHT Capabilities Information field.
+	ExtendedNSSBW int
+
+	// Supported MCS for VHT mode
+	// Todo:
+	// - Parse them according to Section 8.4.2.160.3 IEEE Std 80211ac-2013
+	SupportedMCS [8]byte
+}
+
+// FrequencyAttrs represents the attributes of a WiFi frequency/channel.
+type FrequencyAttrs struct {
+	// Frequency is the radio frequency in MHz.
+	Frequency int
+
+	// Disabled indicates that the channel is disabled due to regulatory
+	// requirements.
+	Disabled bool
+
+	// NoIR indicates that no mechanisms that initiate radiation are
+	// permitted on this channel.
+	NoIR bool
+
+	// RadarDetection indicates that radar detection is mandatory on this
+	// channel.
+	RadarDetection bool
+
+	// MaxTxPower gives the maximum transmission power in mBm (100 * dBm).
+	MaxTxPower float32
+}
+
+// BitrateAttrs represents the attributes of a bitrate.
+type BitrateAttrs struct {
+	// Bitrate is the bitrate in units of 100kbps.
+	Bitrate float32
+
+	// ShortPreamble indicates that a short preamble is supported in the
+	// 2.4GHz band.
+	ShortPreamble bool
+}
+
+// InterfaceCombination represents a group of valid combinations of interface
+// types which can be simultaneously supported on a device.
+type InterfaceCombination struct {
+	CombinationLimits []InterfaceCombinationLimit
+
+	// Total is the maximum number of interfaces that can be created in this
+	// group.
+	Total int
+
+	// NumChannels is the number of different channels which may be used in
+	// this group.
+	NumChannels int
+
+	// StaApBiMatch indicates that beacon intervals within this group must
+	// all be the same, regardless of interface type.
+	StaApBiMatch bool
+}
+
+// InterfaceCombinationLimit represents a single combination of interface types
+// which may be run simultaneously on a device.
+type InterfaceCombinationLimit struct {
+	InterfaceTypes []InterfaceType
+
+	// Max is the maximum number of interfaces that can be chosen from the
+	// set of interface types in InterfaceTypes.
+	Max int
 }
 
 // List of 802.11 Information Element types.

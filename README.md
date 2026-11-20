@@ -40,7 +40,7 @@ the `node_exporter` access to the host namespaces.
 Be aware that any non-root mount points you want to monitor will need to be bind-mounted
 into the container.
 
-If you start container for host monitoring, specify `path.rootfs` argument.
+If you start a container for host monitoring, specify the `path.rootfs` argument.
 This argument must match path in bind-mount of host root. The node\_exporter will use
 `path.rootfs` as prefix to access host filesystem.
 
@@ -83,6 +83,15 @@ below list all existing collectors and the supported systems.
 Collectors are enabled by providing a `--collector.<name>` flag.
 Collectors that are enabled by default can be disabled by providing a `--no-collector.<name>` flag.
 To enable only some specific collector(s), use `--collector.disable-defaults --collector.<name> ...`.
+
+There are two meta-monitoring metrics available for checking the status of collectors.
+
+    node_scrape_collector_success
+    node_scrape_collector_duration_seconds
+
+Note that if a configured collector reads no data because it can't find a file in `/proc` or `/sys`,
+the success status will be 0. This is intentional to provide a way to detect faild drivers and similar
+problems.
 
 ### Include & Exclude flags
 
@@ -213,11 +222,13 @@ pcidevice | Exposes pci devices' information including their link status and par
 perf | Exposes perf based metrics (Warning: Metrics are dependent on kernel configuration and settings). | Linux
 processes | Exposes aggregate process statistics from `/proc`. | Linux
 qdisc | Exposes [queuing discipline](https://en.wikipedia.org/wiki/Network_scheduler#Linux_kernel) statistics | Linux
+resctrl | Exposes Intel RDT / AMD PQoS / ARM MPAM memory bandwidth and cache occupancy monitoring counters from the resctrl filesystem root group (must be mounted, see [below](#resctrl-collector)). | Linux
 slabinfo | Exposes slab statistics from `/proc/slabinfo`. Note that permission of `/proc/slabinfo` is usually 0400, so set it appropriately. | Linux
 softirqs | Exposes detailed softirq statistics from `/proc/softirqs`. | Linux
 sysctl | Expose sysctl values from `/proc/sys`. Use `--collector.sysctl.include(-info)` to configure. | Linux
 swap | Expose swap information from `/proc/swaps`. | Linux
 systemd | Exposes service and system status from [systemd](http://www.freedesktop.org/wiki/Software/systemd/). | Linux
+tainted | Exposes kernel taint flags from `/proc/sys/kernel/tainted`. | Linux
 tcpstat | Exposes TCP connection status information from `/proc/net/tcp` and `/proc/net/tcp6`. (Warning: the current version has potential performance issues in high load situations.) | Linux
 wifi | Exposes WiFi device and station statistics. | Linux
 xfrm | Exposes statistics from `/proc/net/xfrm_stat` | Linux
@@ -269,6 +280,24 @@ counts when using the `--collector.perf.tracepoint` flag. Tracepoints can be
 found using [`perf list`](http://man7.org/linux/man-pages/man1/perf.1.html) or
 from debugfs. And example usage of this would be
 `--collector.perf.tracepoint="sched:sched_process_exec"`.
+
+### Resctrl Collector
+
+The `resctrl` collector is disabled by default because the filesystem it reads is usually not mounted.
+To enable it, first mount the filesystem and then start `node_exporter` with the collector enabled:
+```
+mount -t resctrl resctrl /sys/fs/resctrl
+node_exporter --collector.resctrl
+```
+
+From Linux 6.19 a CPU with assignable bandwidth monitoring counters comes up in `mbm_event` mode.
+The classic mode (required by this collector) can be enabled with:
+
+```
+echo default > /sys/fs/resctrl/info/L3_MON/mbm_assign_mode   # fails harmlessly on older kernels
+```
+
+See the [kernel documentation](https://docs.kernel.org/filesystems/resctrl.html) for more details.
 
 ### Sysctl Collector
 
