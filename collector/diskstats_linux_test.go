@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -71,6 +69,17 @@ node_disk_ata_write_cache{device="sdc"} 1
 node_disk_ata_write_cache_enabled{device="sda"} 0
 node_disk_ata_write_cache_enabled{device="sdb"} 1
 node_disk_ata_write_cache_enabled{device="sdc"} 0
+# HELP node_disk_device_mapper_backing_device_info Info about the underlying block devices of a device mapper device.
+# TYPE node_disk_device_mapper_backing_device_info gauge
+node_disk_device_mapper_backing_device_info{backing_device="dm-0",device="dm-1"} 1
+node_disk_device_mapper_backing_device_info{backing_device="dm-0",device="dm-2"} 1
+node_disk_device_mapper_backing_device_info{backing_device="dm-0",device="dm-3"} 1
+node_disk_device_mapper_backing_device_info{backing_device="dm-0",device="dm-4"} 1
+node_disk_device_mapper_backing_device_info{backing_device="nvme0n1p3",device="dm-0"} 1
+node_disk_device_mapper_backing_device_info{backing_device="sdi",device="dm-5"} 1
+node_disk_device_mapper_backing_device_info{backing_device="sdj",device="dm-5"} 1
+node_disk_device_mapper_backing_device_info{backing_device="sdk",device="dm-5"} 1
+node_disk_device_mapper_backing_device_info{backing_device="sdl",device="dm-5"} 1
 # HELP node_disk_device_mapper_info Info about disk device mapper.
 # TYPE node_disk_device_mapper_info gauge
 node_disk_device_mapper_info{device="dm-0",lv_layer="",lv_name="",name="nvme0n1_crypt",uuid="CRYPT-LUKS2-jolaulot80fy9zsiobkxyxo7y2dqeho2-nvme0n1_crypt",vg_name=""} 1
@@ -352,30 +361,7 @@ node_disk_written_bytes_total{device="vda"} 1.0938236928e+11
 // not exist (preserving backward compatibility with the previous
 // SysBlockDeviceQueueStats zero-value behaviour, issue #3282).
 func TestRotationalLabel(t *testing.T) {
-	tempProc := t.TempDir()
-	tempSys := t.TempDir()
-
-	// Create a valid rotational=1 file (HDD).
-	err := os.MkdirAll(filepath.Join(tempSys, "block/sda/queue"), 0755)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = os.WriteFile(filepath.Join(tempSys, "block/sda/queue/rotational"), []byte("1\n"), 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Create a rotational=0 file (SSD).
-	err = os.MkdirAll(filepath.Join(tempSys, "block/sdb/queue"), 0755)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = os.WriteFile(filepath.Join(tempSys, "block/sdb/queue/rotational"), []byte("0\n"), 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fs, err := blockdevice.NewFS(tempProc, tempSys)
+	fs, err := blockdevice.NewFS("fixtures/proc", "fixtures/sys/diskstats")
 	if err != nil {
 		t.Fatal(err)
 	}

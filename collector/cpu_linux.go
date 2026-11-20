@@ -219,10 +219,13 @@ func (c *cpuCollector) updateInfo(ch chan<- prometheus.Metric) error {
 			cpu.CacheSize)
 	}
 
+	// The cpufreq collector exports the same metric name with a different
+	// help string and label set. Only export the /proc/cpuinfo frequency
+	// when cpufreq is disabled or uses its own metric prefix.
 	cpuFreqEnabled, ok := collectorState["cpufreq"]
 	if !ok || cpuFreqEnabled == nil {
 		c.logger.Debug("cpufreq key missing or nil value in collectorState map")
-	} else if *cpuFreqEnabled {
+	} else if !*cpuFreqEnabled || *useCPUFreqPrefix {
 		for _, cpu := range info {
 			ch <- prometheus.MustNewConstMetric(c.cpuFrequencyHz,
 				prometheus.GaugeValue,
@@ -407,7 +410,6 @@ func (c *cpuCollector) updateStat(ch chan<- prometheus.Metric) error {
 
 // updateCPUStats updates the internal cache of CPU stats.
 func (c *cpuCollector) updateCPUStats(newStats map[int64]procfs.CPUStat) {
-
 	// Acquire a lock to update the stats.
 	c.cpuStatsMutex.Lock()
 	defer c.cpuStatsMutex.Unlock()
@@ -488,7 +490,7 @@ func (c *cpuCollector) updateCPUStats(newStats map[int64]procfs.CPUStat) {
 	// Remove offline CPUs.
 	if len(newStats) != len(c.cpuStats) {
 		onlineCPUIds := slices.Collect(maps.Keys(newStats))
-		maps.DeleteFunc(c.cpuStats, func(key int64, item procfs.CPUStat) bool {
+		maps.DeleteFunc(c.cpuStats, func(key int64, _ procfs.CPUStat) bool {
 			return !slices.Contains(onlineCPUIds, key)
 		})
 	}

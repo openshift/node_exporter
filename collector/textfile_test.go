@@ -121,6 +121,10 @@ func TestTextfileCollector(t *testing.T) {
 			paths: []string{"fixtures/textfile/metrics_merge_different_help"},
 			out:   "fixtures/textfile/metrics_merge_different_help.out",
 		},
+		{
+			paths: []string{"fixtures/textfile/metrics_merge_inconsistent_then_no_help"},
+			out:   "fixtures/textfile/metrics_merge_inconsistent_then_no_help.out",
+		},
 	}
 
 	for i, test := range tests {
@@ -155,4 +159,29 @@ func TestTextfileCollector(t *testing.T) {
 			t.Fatalf("%d.%q want:\n\n%s\n\ngot:\n\n%s", i, test.paths, string(want), got)
 		}
 	}
+}
+
+func TestTextfileCollectorSupportsUTF8Names(t *testing.T) {
+	c := &textFileCollector{
+		paths:  []string{"fixtures/textfile/utf8_names"},
+		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(collectorAdapter{c})
+
+	families, err := registry.Gather()
+	if err != nil {
+		t.Fatalf("failed to gather textfile with UTF-8 names: %v", err)
+	}
+
+	for _, family := range families {
+		if family.GetName() != "my.dotted.metric" {
+			continue
+		}
+		if got := family.Metric[0].Label[0].GetName(); got != "error.message" {
+			t.Fatalf("expected dotted label name, got %q", got)
+		}
+		return
+	}
+	t.Fatalf("expected dotted metric name, got %v", families)
 }

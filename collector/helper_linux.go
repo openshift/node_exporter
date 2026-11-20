@@ -1,6 +1,6 @@
-// Copyright 2025 The Prometheus Authors
+// Copyright The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file ewcept in compliance with the License.
+// you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
@@ -11,20 +11,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package utils
+package collector
 
 import (
-	"testing"
+	"regexp"
+	"strings"
 )
 
-func TestSafeBytesToString(t *testing.T) {
-	foo := []byte("foo\x00")
-	if want, got := SafeBytesToString(foo), "foo"; want != got {
-		t.Errorf("Expected: %s, Got: %s", want, got)
-	}
+var hwmonInvalidMetricChars = regexp.MustCompile("[^a-z0-9:_]")
 
-	foo = []byte{115, 97, 110, 101, 253, 190, 214}
-	if want, got := SafeBytesToString(foo), "sane�"; want != got {
-		t.Errorf("Expected: %s, Got: %s", want, got)
-	}
+func cleanMetricName(name string) string {
+	lower := strings.ToLower(name)
+	replaced := hwmonInvalidMetricChars.ReplaceAllLiteralString(lower, "_")
+	cleaned := strings.Trim(replaced, "_")
+	return cleaned
 }

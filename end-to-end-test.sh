@@ -74,6 +74,7 @@ enabled_collectors=$(cat << COLLECTORS
   processes
   qdisc
   rapl
+  resctrl
   schedstat
   slabinfo
   sockstat
@@ -175,6 +176,7 @@ collector_flags=$(cat << FLAGS
   --collector.netdev.device-include=lo
   --collector.qdisc.device-include=(wlan0|eth0)
   --collector.qdisc.fixtures=collector/fixtures/qdisc/
+  --collector.resctrl.path=collector/fixtures/resctrl
   --collector.stat.softirq
   --collector.sysctl.include-info=kernel.seccomp.actions_avail
   --collector.sysctl.include=fs.file-nr
@@ -279,7 +281,7 @@ generated_metrics="${tmpdir}/e2e-output.txt"
 for os in freebsd openbsd netbsd solaris dragonfly darwin; do
   if [ "${GOHOSTOS}" = "${os}" ]; then
     generated_metrics="${tmpdir}/e2e-output-${GOHOSTOS}.txt"
-    fixture_metrics="${fixture_metrics::-4}-${GOHOSTOS}.txt"
+    fixture_metrics="${fixture_metrics%.txt}-${GOHOSTOS}.txt"
   fi
 done
 
@@ -366,12 +368,32 @@ non_deterministic_metrics=$(cat << METRICS
   node_memory_swapped_in_bytes_total
   node_memory_swapped_out_bytes_total
   node_memory_swap_size_bytes
+  node_memory_total_bytes
   node_memory_wired_bytes
   node_netstat_tcp_receive_packets_total
   node_netstat_tcp_transmit_packets_total
+  node_netstat_ip4_delivered_total
+  node_netstat_ip4_fast_forward_total
+  node_netstat_ip4_forward_total
+  node_netstat_ip4_receive_fragments_total
+  node_netstat_ip4_receive_packets_total
+  node_netstat_ip4_transmit_packets_total
+  node_netstat_ip4_transmit_raw_packets_total
+  node_netstat_ip6_delivered_total
+  node_netstat_ip6_forward_total
+  node_netstat_ip6_receive_fragments_total
+  node_netstat_ip6_receive_packets_total
+  node_netstat_ip6_transmit_packets_total
+  node_netstat_ip6_transmit_raw_packets_total
+  node_netstat_tcp_connections
+  node_netstat_tcp_receive_packets_total
+  node_netstat_tcp_transmit_packets_total
+  node_netstat_udp_receive_packets_total
+  node_netstat_udp_transmit_packets_total
   node_network_receive_bytes_total
   node_network_receive_multicast_total
   node_network_transmit_multicast_total
+  node_thermal_temperature_celsius
   node_zfs_abdstats_linear_count_total
   node_zfs_abdstats_linear_data_bytes
   node_zfs_abdstats_scatter_chunk_waste_bytes
@@ -381,6 +403,7 @@ non_deterministic_metrics=$(cat << METRICS
   node_zfs_arcstats_anon_bytes
   node_zfs_arcstats_c_bytes
   node_zfs_arcstats_c_max_bytes
+  node_zfs_arcstats_c_min_bytes
   node_zfs_arcstats_data_bytes
   node_zfs_arcstats_demand_data_hits_total
   node_zfs_arcstats_demand_data_misses_total

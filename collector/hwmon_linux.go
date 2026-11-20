@@ -37,11 +37,10 @@ var (
 	collectorHWmonSensorInclude = kingpin.Flag("collector.hwmon.sensor-include", "Regexp of hwmon sensor to include (mutually exclusive to sensor-exclude).").String()
 	collectorHWmonSensorExclude = kingpin.Flag("collector.hwmon.sensor-exclude", "Regexp of hwmon sensor to exclude (mutually exclusive to sensor-include).").String()
 
-	hwmonInvalidMetricChars = regexp.MustCompile("[^a-z0-9:_]")
-	hwmonFilenameFormat     = regexp.MustCompile(`^(?P<type>[^0-9]+)(?P<id>[0-9]*)?(_(?P<property>.+))?$`)
-	hwmonLabelDesc          = []string{"chip", "sensor"}
-	hwmonChipNameLabelDesc  = []string{"chip", "chip_name"}
-	hwmonSensorTypes        = []string{
+	hwmonFilenameFormat    = regexp.MustCompile(`^(?P<type>[^0-9]+)(?P<id>[0-9]*)?(_(?P<property>.+))?$`)
+	hwmonLabelDesc         = []string{"chip", "sensor"}
+	hwmonChipNameLabelDesc = []string{"chip", "chip_name"}
+	hwmonSensorTypes       = []string{
 		"vrm", "beep_enable", "update_interval", "in", "cpu", "fan",
 		"pwm", "temp", "curr", "power", "energy", "humidity",
 		"intrusion", "freq",
@@ -61,7 +60,6 @@ type hwMonCollector struct {
 // NewHwMonCollector returns a new Collector exposing /sys/class/hwmon stats
 // (similar to lm-sensors).
 func NewHwMonCollector(logger *slog.Logger) (Collector, error) {
-
 	return &hwMonCollector{
 		logger:       logger,
 		deviceFilter: newDeviceFilter(*collectorHWmonChipExclude, *collectorHWmonChipInclude),
@@ -69,14 +67,7 @@ func NewHwMonCollector(logger *slog.Logger) (Collector, error) {
 	}, nil
 }
 
-func cleanMetricName(name string) string {
-	lower := strings.ToLower(name)
-	replaced := hwmonInvalidMetricChars.ReplaceAllLiteralString(lower, "_")
-	cleaned := strings.Trim(replaced, "_")
-	return cleaned
-}
-
-func addValueFile(data map[string]map[string]string, sensor string, prop string, file string) {
+func addValueFile(data map[string]map[string]string, sensor, prop, file string) {
 	raw, err := sysReadFile(file)
 	if err != nil {
 		return

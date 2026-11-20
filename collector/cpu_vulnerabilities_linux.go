@@ -25,13 +25,11 @@ const (
 	cpuVulnerabilitiesCollectorSubsystem = "cpu_vulnerabilities"
 )
 
-var (
-	vulnerabilityDesc = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, cpuVulnerabilitiesCollectorSubsystem, "info"),
-		"Details of each CPU vulnerability reported by sysfs. The value of the series is an int encoded state of the vulnerability. The same state is stored as a string in the label",
-		[]string{"codename", "state", "mitigation"},
-		nil,
-	)
+var vulnerabilityDesc = prometheus.NewDesc(
+	prometheus.BuildFQName(namespace, cpuVulnerabilitiesCollectorSubsystem, "info"),
+	"Details of each CPU vulnerability reported by sysfs. The value of the series is an int encoded state of the vulnerability. The same state is stored as a string in the label",
+	[]string{"codename", "state", "mitigation"},
+	nil,
 )
 
 type cpuVulnerabilitiesCollector struct{}
@@ -40,7 +38,7 @@ func init() {
 	registerCollector(cpuVulnerabilitiesCollectorSubsystem, defaultDisabled, NewVulnerabilitySysfsCollector)
 }
 
-func NewVulnerabilitySysfsCollector(logger *slog.Logger) (Collector, error) {
+func NewVulnerabilitySysfsCollector(_ *slog.Logger) (Collector, error) {
 	return &cpuVulnerabilitiesCollector{}, nil
 }
 
