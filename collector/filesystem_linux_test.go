@@ -19,6 +19,9 @@ package collector
 import (
 	"io"
 	"log/slog"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/alecthomas/kingpin/v2"
@@ -145,6 +148,38 @@ func TestMountPointDetails(t *testing.T) {
 		if _, ok := foundSet[mountPoint]; !ok {
 			t.Errorf("Expected %s, got nothing", mountPoint)
 		}
+	}
+}
+
+// TestMountPointDetailsReadsMountInfoBeyond1MiB checks that the procfs reader
+// returns every mount, including those beyond the 1 MiB read limit.
+// This test is temporary to help validate backports for https://redhat.atlassian.net/browse/OCPBUGS-129345
+// We'll try to add it upstream.
+func TestMountPointDetailsReadsMountInfoBeyond1MiB(t *testing.T) {
+	const (
+		mountInfo  = "36 35 0:32 / /mnt/test rw,nosuid,nodev - tmpfs tmpfs rw,size=1m\n"
+		mountCount = (1<<20)/len(mountInfo) + 1
+	)
+
+	procDir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(procDir, "1"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(procDir, "1", "mountinfo"), []byte(strings.Repeat(mountInfo, mountCount)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	originalProcPath := *procPath
+	t.Cleanup(func() { *procPath = originalProcPath })
+	*procPath = procDir
+
+	filesystems, err := mountPointDetails(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(filesystems) != mountCount {
+		t.Fatalf("got %d mount points, want %d", len(filesystems), mountCount)
 	}
 }
 
